@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CLAUDIUS v3 — Command Center</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+:root{--bg:#0a0a0f;--s1:#12121a;--s2:#1a1a28;--brd:#2a2a3a;--gold:#c49a1a;--gold-d:#8a6c12;--grn:#22c55e;--grn-d:#166534;--red:#ef4444;--red-d:#7f1d1d;--org:#f59e0b;--org-d:#78350f;--blu:#3b82f6;--blu-d:#1e3a5f;--pur:#a855f7;--pur-d:#4c1d95;--txt:#e4e4e7;--dim:#71717a;--mut:#52525b}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-height:100vh}
+
+/* Header */
+.hdr{background:linear-gradient(135deg,var(--s1),var(--s2));border-bottom:1px solid var(--brd);padding:20px 32px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.hdr-l{display:flex;align-items:center;gap:14px}
+.logo{width:42px;height:42px;background:radial-gradient(circle,var(--gold) 30%,transparent 70%);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px}
+.hdr h1{font-size:22px;font-weight:700;background:linear-gradient(135deg,var(--gold),#e8c547);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hdr-sub{font-size:12px;color:var(--dim)}
+.badge{padding:5px 14px;border-radius:16px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px}
+.badge-phase{background:var(--gold-d);color:var(--gold)}
+.badge-live{background:var(--grn-d);color:var(--grn);margin-left:8px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+/* Main */
+.main{padding:24px 32px;max-width:1440px;margin:0 auto}
+.loading{text-align:center;padding:60px;color:var(--dim);font-size:16px}
+.loading .spin{display:inline-block;width:24px;height:24px;border:3px solid var(--brd);border-top-color:var(--gold);border-radius:50%;animation:sp .8s linear infinite;margin-right:10px;vertical-align:middle}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* Grid */
+.grid{display:grid;gap:16px;margin-bottom:24px}
+.g5{grid-template-columns:repeat(5,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g2{grid-template-columns:1fr 1fr}
+
+/* Cards */
+.card{background:var(--s1);border:1px solid var(--brd);border-radius:12px;padding:20px;position:relative;overflow:hidden}
+.card h3{font-size:12px;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim);margin-bottom:14px}
+.hc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.hc-ok::before{background:var(--grn)}.hc-warn::before{background:var(--org)}.hc-crit::before{background:var(--red)}.hc-off::before{background:var(--mut)}
+.hc .lb{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim);margin-bottom:6px}
+.hc .vl{font-size:26px;font-weight:700;font-family:'JetBrains Mono',monospace}
+.hc-ok .vl{color:var(--grn)}.hc-warn .vl{color:var(--org)}.hc-crit .vl{color:var(--red)}.hc-off .vl{color:var(--mut)}
+.hc .dt{font-size:11px;color:var(--dim);margin-top:3px}
+
+/* Blockers */
+.blk{background:linear-gradient(135deg,#1a0a0a,var(--s1));border:1px solid #3a1a1a;border-radius:12px;padding:18px 20px;margin-bottom:24px}
+.blk h3{color:var(--red);font-size:12px;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px}
+.blk-i{display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid #2a1515;font-size:13px;line-height:1.5}
+.blk-i:last-child{border-bottom:none}
+.lvl{font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;white-space:nowrap;margin-top:2px}
+.lv-c{background:var(--red-d);color:var(--red)}.lv-h{background:var(--org-d);color:var(--org)}.lv-m{background:var(--blu-d);color:var(--blu)}.lv-l{background:var(--s2);color:var(--dim)}
+
+/* Tabs */
+.tab-bar{display:flex;gap:2px;margin-bottom:20px;background:var(--s1);border-radius:10px;padding:3px;border:1px solid var(--brd);flex-wrap:wrap}
+.tab{padding:8px 16px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:500;color:var(--dim);transition:all .2s;flex:1;text-align:center;white-space:nowrap}
+.tab:hover{color:var(--txt);background:var(--s2)}.tab.act{background:var(--gold-d);color:var(--gold)}
+.tc{display:none}.tc.act{display:block}
+
+/* Agent cards */
+.ag{background:var(--s1);border:1px solid var(--brd);border-radius:12px;padding:18px;transition:border-color .2s}
+.ag:hover{border-color:var(--gold-d)}
+.ag-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.ag-ico{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.dot{width:10px;height:10px;border-radius:50%}
+.dot-ok{background:var(--grn);box-shadow:0 0 8px var(--grn)}.dot-warn{background:var(--org);box-shadow:0 0 8px var(--org)}.dot-off{background:var(--mut)}
+.ag-nm{font-size:14px;font-weight:600;margin-bottom:3px}
+.ag-sch{font-size:11px;color:var(--dim);font-family:'JetBrains Mono',monospace;margin-bottom:10px}
+.ag-sts{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.ag-st{background:var(--s2);border-radius:6px;padding:6px 8px}
+.ag-st .sl{font-size:9px;text-transform:uppercase;color:var(--mut);letter-spacing:.5px}
+.ag-st .sv{font-size:15px;font-weight:600;font-family:'JetBrains Mono',monospace}
+.vd{margin-top:10px;padding:7px 10px;border-radius:6px;font-size:11px;font-weight:500;line-height:1.4}
+.vd-ok{background:#0a1f0a;color:var(--grn);border:1px solid #1a3a1a}
+.vd-warn{background:#1f1a0a;color:var(--org);border:1px solid #3a2a0a}
+.vd-fail{background:#1f0a0a;color:var(--red);border:1px solid #3a1a1a}
+
+/* Timeline */
+.tl-i{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--brd);font-size:12px;align-items:flex-start;flex-wrap:wrap}
+.tl-i:last-child{border-bottom:none}
+.tl-d{font-family:'JetBrains Mono',monospace;color:var(--dim);white-space:nowrap;min-width:90px;font-size:11px}
+.tl-a{font-weight:600;min-width:85px;font-size:11px}
+.tl-s{font-size:9px;padding:1px 5px;border-radius:3px;font-weight:600;min-width:50px;text-align:center}
+.ts-s{background:var(--grn-d);color:var(--grn)}.ts-aw{background:var(--org-d);color:var(--org)}.ts-p{background:var(--org-d);color:var(--org)}.ts-f{background:var(--red-d);color:var(--red)}
+.tl-sum{color:var(--dim);line-height:1.4;font-size:11px;flex:1;min-width:200px}
+
+/* Feedback stars */
+.tl-fb{display:flex;align-items:center;gap:2px;margin-left:auto}
+.stars{display:inline-flex;gap:1px}
+.star{cursor:pointer;font-size:16px;color:var(--mut);transition:all .15s;background:none;border:none;padding:2px 3px;line-height:1;-webkit-tap-highlight-color:transparent}
+.star:hover,.star.lit{color:var(--gold);transform:scale(1.15)}
+.star.sent{color:var(--grn);cursor:default;transform:none}
+.fb-ok{color:var(--grn);font-size:11px;margin-left:4px;font-weight:600}
+
+/* Patterns / Incidents */
+.pi{padding:12px 0;border-bottom:1px solid var(--brd)}
+.pi:last-child{border-bottom:none}
+.pi-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.pi-t{font-size:12px;font-weight:600;font-family:'JetBrains Mono',monospace}
+.cb{width:70px;height:5px;background:var(--s2);border-radius:3px;overflow:hidden}
+.cf{height:100%;border-radius:3px}
+.pi-d{font-size:11px;color:var(--dim);line-height:1.4}
+
+/* Asset cards (Netlify, GitHub, n8n) */
+.nl{background:var(--s1);border:1px solid var(--brd);border-radius:10px;padding:14px;transition:border-color .2s}
+.nl:hover{border-color:var(--blu)}
+.nl-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.nl-nm{font-size:13px;font-weight:600;font-family:'JetBrains Mono',monospace}
+.nl-st{font-size:9px;padding:2px 8px;border-radius:4px;font-weight:600;text-transform:uppercase}
+.nl-ready{background:var(--grn-d);color:var(--grn)}
+.nl-error{background:var(--red-d);color:var(--red)}
+.nl-url{font-size:10px;color:var(--dim);word-break:break-all;margin-bottom:6px}
+.nl-url a{color:var(--blu);text-decoration:none}
+.nl-url a:hover{text-decoration:underline}
+.nl-meta{display:flex;gap:12px;font-size:10px;color:var(--mut)}
+
+.gh{background:var(--s1);border:1px solid var(--brd);border-radius:10px;padding:14px;transition:border-color .2s}
+.gh:hover{border-color:var(--pur)}
+.gh-nm{font-size:13px;font-weight:600;margin-bottom:4px}
+.gh-nm a{color:var(--txt);text-decoration:none}
+.gh-nm a:hover{color:var(--pur)}
+.gh-desc{font-size:11px;color:var(--dim);margin-bottom:8px;line-height:1.4}
+.gh-meta{display:flex;gap:14px;font-size:10px;color:var(--mut)}
+.gh-badge{font-size:9px;padding:1px 6px;border-radius:3px;font-weight:600}
+.gh-public{background:var(--grn-d);color:var(--grn)}
+.gh-private{background:var(--org-d);color:var(--org)}
+
+.n8n-wf{background:var(--s1);border:1px solid var(--brd);border-radius:12px;padding:20px;margin-bottom:16px}
+.n8n-wf h4{font-size:14px;font-weight:600;margin-bottom:4px}
+.n8n-sch{font-size:11px;color:var(--dim);font-family:'JetBrains Mono',monospace;margin-bottom:12px}
+.n8n-pipe{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:12px}
+.n8n-step{background:var(--s2);border:1px solid var(--brd);border-radius:6px;padding:5px 10px;font-size:10px;color:var(--txt)}
+.n8n-arrow{color:var(--mut);font-size:12px}
+
+/* Charts */
+.chart-c{position:relative;height:200px}
+
+/* Actions */
+.act-i{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--s2);border-radius:8px;margin-bottom:6px;font-size:12px}
+
+/* Feedback */
+.fb-card{background:var(--s1);border:1px solid var(--brd);border-radius:12px;padding:16px;margin-bottom:12px}
+.fb-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--brd);font-size:12px}
+.fb-item:last-child{border-bottom:none}
+.fb-stars-display{color:var(--gold);font-size:14px;letter-spacing:1px}
+
+/* Footer */
+.ft{text-align:center;padding:20px;color:var(--mut);font-size:11px;border-top:1px solid var(--brd);margin-top:32px}
+.refresh-btn{background:var(--s2);border:1px solid var(--brd);color:var(--dim);padding:6px 14px;border-radius:8px;cursor:pointer;font-size:11px;font-family:'Inter',sans-serif;transition:all .2s}
+.refresh-btn:hover{border-color:var(--gold);color:var(--gold)}
+
+@media(max-width:900px){.g5,.g4,.g3,.g2{grid-template-columns:1fr}.tl-i{flex-direction:column;gap:4px}.tl-fb{margin-left:0;margin-top:4px}}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-l">
+    <div class="logo">&#x2726;</div>
+    <div>
+      <h1>CLAUDIUS v3</h1>
+      <div class="hdr-sub">Control Plane &mdash; Sistema Operativo Pessoal de IA</div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+    <span class="badge badge-phase" id="phase-badge">&#9679; A carregar...</span>
+    <span class="badge badge-live">&#9679; LIVE</span>
+    <button class="refresh-btn" onclick="loadAll()">&#8635; Refresh</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="tab-bar">
+    <div class="tab act" onclick="sw('overview',this)">&#9776; Overview</div>
+    <div class="tab" onclick="sw('agents',this)">&#129302; Agentes</div>
+    <div class="tab" onclick="sw('exec',this)">&#9201; Execu&ccedil;&otilde;es</div>
+    <div class="tab" onclick="sw('netlify',this)">&#9729; Netlify</div>
+    <div class="tab" onclick="sw('github',this)">&#128025; GitHub</div>
+    <div class="tab" onclick="sw('n8n',this)">&#9881; n8n</div>
+    <div class="tab" onclick="sw('incidents',this)">&#128680; Incidentes</div>
+    <div class="tab" onclick="sw('feedback',this)">&#11088; Feedback</div>
+  </div>
+
+  <div id="loading" class="loading"><span class="spin"></span> A carregar dados...</div>
+
+  <!-- OVERVIEW -->
+  <div id="t-overview" class="tc act" style="display:none">
+    <div class="grid g5" id="health-cards"></div>
+    <div id="blockers-section"></div>
+    <div class="grid g2">
+      <div class="card"><h3>Execu&ccedil;&otilde;es por Dia</h3><div class="chart-c"><canvas id="execChart"></canvas></div></div>
+      <div class="card"><h3>Sa&uacute;de por Agente</h3><div class="chart-c"><canvas id="agentChart"></canvas></div></div>
+    </div>
+    <div class="card" id="actions-card"></div>
+  </div>
+
+  <!-- AGENTS -->
+  <div id="t-agents" class="tc">
+    <div class="grid g4" id="agent-cards"></div>
+  </div>
+
+  <!-- EXECUTIONS -->
+  <div id="t-exec" class="tc">
+    <div class="card"><h3>Timeline</h3><div id="timeline"></div></div>
+  </div>
+
+  <!-- NETLIFY -->
+  <div id="t-netlify" class="tc">
+    <div class="grid g4" id="netlify-summary"></div>
+    <div class="grid g4" id="netlify-cards"></div>
+  </div>
+
+  <!-- GITHUB -->
+  <div id="t-github" class="tc">
+    <div class="grid g3" id="github-summary"></div>
+    <div class="grid g3" id="github-cards"></div>
+  </div>
+
+  <!-- N8N -->
+  <div id="t-n8n" class="tc">
+    <div class="grid g3" id="n8n-summary"></div>
+    <div id="n8n-workflows"></div>
+  </div>
+
+  <!-- INCIDENTS (was Patterns in v2) -->
+  <div id="t-incidents" class="tc">
+    <div class="card"><h3>Incidentes Activos</h3><div id="incidents-list"></div></div>
+  </div>
+
+  <!-- FEEDBACK -->
+  <div id="t-feedback" class="tc">
+    <div class="grid g3" id="fb-summary"></div>
+    <div class="grid g2">
+      <div class="card"><h3>M&eacute;dia por Agente</h3><div class="chart-c"><canvas id="fbChart"></canvas></div></div>
+      <div class="card"><h3>Feedback Recente</h3><div id="fb-list"></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="ft" id="footer">CLAUDIUS &mdash; A carregar...</div>
+
+<script>
+// ═══════════════════════════════════════════
+// CONTROL PLANE CONFIG — ZERO SECRETS
+// All data flows through Edge Functions (BFF)
+// The anon key is PUBLIC by design (Supabase docs)
+// Edge Functions use SERVICE_ROLE_KEY server-side
+// ═══════════════════════════════════════════
+const BFF = 'https://btkdpjlltekssobfzdhu.supabase.co/functions/v1';
+const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0a2RwamxsdGVrc3NvYmZ6ZGh1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NzA4ODgsImV4cCI6MjA4NjI0Njg4OH0.6IwYG23OD9Rh2fpVMlGiaZy77d3CKczpudIzjZ9dEZM';
+const AUTH = {'Authorization': 'Bearer ' + ANON_KEY, 'Content-Type': 'application/json'};
+
+// ═══════════════════════════════════════════
+// DATA STORES
+// ═══════════════════════════════════════════
+let overviewData = null;
+let agentsData = [];
+let execData = [];
+let netlifyAssets = [];
+let githubAssets = [];
+let n8nAssets = [];
+let incidentsData = [];
+let feedbackData = [];
+const sentFeedback = {};
+
+// ═══════════════════════════════════════════
+// BFF HELPER
+// ═══════════════════════════════════════════
+async function bff(endpoint, opts = {}) {
+  const url = `${BFF}/${endpoint}`;
+  const r = await fetch(url, {
+    method: opts.method || 'GET',
+    headers: AUTH,
+    body: opts.body ? JSON.stringify(opts.body) : undefined
+  });
+  if (!r.ok) throw new Error(`BFF ${endpoint} → ${r.status}`);
+  return r.json();
+}
+
+// ═══════════════════════════════════════════
+// SEND FEEDBACK via BFF
+// ═══════════════════════════════════════════
+async function sendFeedback(execId, score, el) {
+  const row = el.closest('.tl-fb');
+  const stars = row.querySelectorAll('.star');
+  stars.forEach(s => { s.classList.remove('lit'); s.classList.add('sent'); s.style.pointerEvents='none'; });
+  for (let i = 0; i < score; i++) stars[i].textContent = '\u2605';
+  for (let i = score; i < 5; i++) stars[i].textContent = '\u2606';
+  let ok = row.querySelector('.fb-ok');
+  if (!ok) { ok = document.createElement('span'); ok.className='fb-ok'; row.appendChild(ok); }
+  ok.textContent = '\u2714 ' + score + '/5';
+  sentFeedback[execId] = score;
+  try {
+    await bff('api-feedback', { method: 'POST', body: { execution_id: execId, score: score } });
+  } catch(e) { ok.textContent = '\u26A0 Erro'; ok.style.color = 'var(--red)'; }
+}
+
+// ═══════════════════════════════════════════
+// LOAD ALL DATA — Parallel BFF calls
+// ═══════════════════════════════════════════
+async function loadAll() {
+  document.getElementById('loading').style.display='block';
+  try {
+    const [overview, agents, execs, netlify, github, n8n, incidents, feedback] = await Promise.all([
+      bff('api-overview'),
+      bff('api-agents'),
+      bff('api-executions?limit=100'),
+      bff('api-assets?type=netlify_site'),
+      bff('api-assets?type=github_repo'),
+      bff('api-assets?type=n8n_workflow'),
+      bff('api-incidents?status=open'),
+      bff('api-feedback?limit=100')
+    ]);
+
+    overviewData = overview;
+    agentsData = agents.agents || [];
+    execData = execs.executions || [];
+    netlifyAssets = netlify.assets || [];
+    githubAssets = github.assets || [];
+    n8nAssets = n8n.assets || [];
+    incidentsData = incidents.incidents || [];
+    feedbackData = feedback.feedback || [];
+
+    // Pre-populate sent feedback
+    feedbackData.forEach(f => { sentFeedback[f.execution_id] = f.score; });
+
+    render();
+  } catch(e) {
+    document.getElementById('loading').innerHTML = '&#9888; Erro ao carregar: ' + e.message + '<br><span style="font-size:12px;color:var(--dim)">Verifica se as Edge Functions est&atilde;o deployed.</span>';
+  }
+}
+
+// ═══════════════════════════════════════════
+// RENDER ALL
+// ═══════════════════════════════════════════
+function render() {
+  document.getElementById('loading').style.display='none';
+  document.getElementById('t-overview').style.display='block';
+  renderHealth();
+  renderBlockers();
+  renderActions();
+  renderAgents();
+  renderTimeline();
+  renderNetlify();
+  renderGitHub();
+  renderN8N();
+  renderIncidents();
+  renderCharts();
+  renderFeedback();
+
+  const phase = overviewData?.phase || 'Early-Ops';
+  document.getElementById('phase-badge').innerHTML = '&#9679; ' + phase;
+  const now = new Date().toLocaleString('pt-PT',{timeZone:'Europe/Lisbon'});
+  document.getElementById('footer').innerHTML = `CLAUDIUS v3 &mdash; Control Plane &bull; ${now} &bull; "A IA serve o Humano."`;
+}
+
+// ═══════════════════════════════════════════
+// OVERVIEW — Health Cards (from api-overview)
+// ═══════════════════════════════════════════
+function renderHealth() {
+  const h = overviewData?.health || {};
+  const sc = overviewData?.summary_cards || {};
+  const rate = h.success_rate_7d || 0;
+  const rateClass = rate >= 75 ? 'hc-ok' : rate >= 50 ? 'hc-warn' : 'hc-crit';
+  const healthClass = h.global_health >= 70 ? 'hc-ok' : h.global_health >= 40 ? 'hc-warn' : 'hc-crit';
+
+  document.getElementById('health-cards').innerHTML = `
+    <div class="card hc ${healthClass}"><div class="lb">Global Health</div><div class="vl">${h.global_health || 0}%</div><div class="dt">Score ponderado</div></div>
+    <div class="card hc ${rateClass}"><div class="lb">Success Rate (7d)</div><div class="vl">${rate}%</div><div class="dt">${h.success_executions_7d||0}/${h.total_executions_7d||0} execu&ccedil;&otilde;es</div></div>
+    <div class="card hc ${h.active_agents>0?'hc-ok':'hc-warn'}"><div class="lb">Agentes Activos</div><div class="vl">${h.active_agents||0}/${h.total_agents||0}</div><div class="dt">${h.total_agents||0} registados</div></div>
+    <div class="card hc ${sc.netlify_sites>0?'hc-ok':'hc-off'}"><div class="lb">Assets</div><div class="vl">${(sc.netlify_sites||0)+(sc.github_repos||0)+(sc.n8n_workflows||0)}</div><div class="dt">${sc.netlify_sites||0} Netlify &bull; ${sc.github_repos||0} GitHub &bull; ${sc.n8n_workflows||0} n8n</div></div>
+    <div class="card hc ${h.open_incidents>0?(h.critical_incidents>0?'hc-crit':'hc-warn'):'hc-ok'}"><div class="lb">Incidentes</div><div class="vl">${h.open_incidents||0}</div><div class="dt">${h.critical_incidents||0} cr&iacute;ticos</div></div>
+  `;
+}
+
+// ═══════════════════════════════════════════
+// OVERVIEW — Blockers (from api-overview)
+// ═══════════════════════════════════════════
+function renderBlockers() {
+  const blockers = overviewData?.blockers || [];
+  if (!blockers.length) { document.getElementById('blockers-section').innerHTML=''; return; }
+  let html = '<div class="blk"><h3>&#9888; Blockers Activos</h3>';
+  blockers.forEach(b => {
+    const lvlMap = {critical:'c',high:'h',medium:'m',low:'l'};
+    const lvl = lvlMap[b.severity] || 'l';
+    const lvlTxt = b.severity.toUpperCase();
+    html += `<div class="blk-i"><span class="lvl lv-${lvl}">${lvlTxt}</span><span>${esc(b.summary || b.title)}</span></div>`;
+  });
+  html += '</div>';
+  document.getElementById('blockers-section').innerHTML = html;
+}
+
+// ═══════════════════════════════════════════
+// OVERVIEW — Recommended Actions (from api-overview)
+// ═══════════════════════════════════════════
+function renderActions() {
+  const actions = overviewData?.recommended_actions || [];
+  let html = '<h3>&#9889; Ac&ccedil;&otilde;es Recomendadas</h3>';
+  if (actions.length) {
+    actions.forEach(a => {
+      const emoji = a.priority >= 80 ? '&#128308;' : a.priority >= 50 ? '&#128992;' : '&#128994;';
+      html += `<div class="act-i"><span>${emoji}</span><strong>${esc(a.title)}</strong> <span style="font-size:10px;color:var(--dim);margin-left:8px">(${a.source}, confiança ${Math.round((a.confidence||0)*100)}%)</span></div>`;
+    });
+  } else {
+    html += '<div class="act-i">&#9989; Sem ac&ccedil;&otilde;es pendentes</div>';
+  }
+  document.getElementById('actions-card').innerHTML = html;
+}
+
+// ═══════════════════════════════════════════
+// AGENTS TAB (from api-agents — pre-enriched)
+// ═══════════════════════════════════════════
+function renderAgents() {
+  const icons = {
+    'claudius-orchestrator':'&#129302;','claudius-logger':'&#128221;','claudius-gmail-monitor':'&#128231;',
+    'claudius-learning-loop':'&#129504;','claudius-agent-factory':'&#9881;','claudius-formiga':'&#128028;',
+    'maquina-nocturna':'&#127769;','ig-mestredenada':'&#128247;','arcanum-do-dia':'&#127183;',
+    'briefing-matinal':'&#9749;','era-zona-post':'&#127968;','cowork-daily-briefing':'&#128203;'
+  };
+  const bgColors = {
+    'claudius-orchestrator':'#1a2a1a','claudius-logger':'#1a1a2a','claudius-gmail-monitor':'#2a1a0a',
+    'claudius-learning-loop':'#2a0a2a','claudius-agent-factory':'#1a2a2a','claudius-formiga':'#2a2a0a',
+    'maquina-nocturna':'#0a0a2a','ig-mestredenada':'#2a0a1a','arcanum-do-dia':'#1a0a2a',
+    'briefing-matinal':'#2a1a0a','era-zona-post':'#0a2a1a','cowork-daily-briefing':'#0a1a2a'
+  };
+
+  let html = '';
+  agentsData.forEach(a => {
+    const s = a.stats || {};
+    const rate = s.success_rate != null ? s.success_rate + '%' : '\u2014';
+    const last = s.last_run ? fmtDate(s.last_run) : 'Nunca';
+    const dotClass = a.status === 'active' ? (s.total_runs > 0 ? 'dot-ok' : 'dot-warn') : 'dot-off';
+    const icon = icons[a.name] || '&#128260;';
+    const bg = bgColors[a.name] || '#1a1a2a';
+    const schedule = a.config?.schedule || a.config?.cron || '\u2014';
+
+    let verdict, vdClass;
+    if (a.status !== 'active') { verdict = 'Inactivo'; vdClass = 'vd-fail'; }
+    else if (!s.total_runs) { verdict = 'Sem execu\u00e7\u00f5es'; vdClass = 'vd-warn'; }
+    else if (s.success_rate >= 75) { verdict = `OK \u2014 ${s.total_runs} runs, ${rate} success`; vdClass = 'vd-ok'; }
+    else { verdict = `Aten\u00e7\u00e3o \u2014 ${s.total_runs} runs, ${rate} success`; vdClass = 'vd-warn'; }
+
+    if (s.avg_feedback != null) {
+      verdict += ` \u2022 Feedback: ${s.avg_feedback}/5`;
+    }
+
+    html += `<div class="ag">
+      <div class="ag-h"><div class="ag-ico" style="background:${bg}">${icon}</div><span class="dot ${dotClass}"></span></div>
+      <div class="ag-nm">${esc(a.name)}</div>
+      <div class="ag-sch">&#128337; ${esc(schedule)}</div>
+      <div class="ag-sts">
+        <div class="ag-st"><div class="sl">Tipo</div><div class="sv" style="font-size:10px;color:var(--dim)">${esc(a.type)}</div></div>
+        <div class="ag-st"><div class="sl">Runs</div><div class="sv" style="color:var(--blu)">${s.total_runs||0}</div></div>
+        <div class="ag-st"><div class="sl">Success</div><div class="sv" style="color:${s.total_runs?'var(--grn)':'var(--mut)'}">${rate}</div></div>
+        <div class="ag-st"><div class="sl">7d</div><div class="sv" style="color:var(--pur)">${s.runs_7d||0}</div></div>
+      </div>
+      <div class="vd ${vdClass}">${verdict}</div>
+    </div>`;
+  });
+  document.getElementById('agent-cards').innerHTML = html || '<div style="color:var(--dim);padding:20px">Sem agentes registados</div>';
+}
+
+// ═══════════════════════════════════════════
+// EXECUTIONS TAB (from api-executions — feedback merged)
+// ═══════════════════════════════════════════
+function renderTimeline() {
+  const agentColors = {
+    'claudius-orchestrator':'var(--blu)','claudius-logger':'var(--pur)','claudius-gmail-monitor':'var(--org)',
+    'claudius-learning-loop':'var(--pur)','claudius-agent-factory':'#06b6d4','claudius-formiga':'#a3e635',
+    'maquina-nocturna':'#818cf8','ig-mestredenada':'#f472b6','arcanum-do-dia':'#c084fc',
+    'cowork-daily-briefing':'var(--blu)','human':'var(--grn)'
+  };
+  let html = '';
+  execData.slice(0, 30).forEach(e => {
+    const sClass = e.status==='success'?'ts-s':e.status==='auth_warning'?'ts-aw':e.status==='partial'?'ts-p':'ts-f';
+    const name = (e.agent_id||'').replace('claudius-','');
+    const sum = e.output_summary ? (e.output_summary.length>150?e.output_summary.substring(0,150)+'...':e.output_summary) : '';
+    const existingFb = sentFeedback[e.id] || e.feedback_score;
+    let starsHtml = '<div class="tl-fb"><div class="stars">';
+    if (existingFb) {
+      for (let i=1;i<=5;i++) starsHtml += `<button class="star sent">${i<=existingFb?'\u2605':'\u2606'}</button>`;
+      starsHtml += `</div><span class="fb-ok">\u2714 ${existingFb}/5</span></div>`;
+    } else {
+      for (let i=1;i<=5;i++) starsHtml += `<button class="star" onmouseenter="hlStars(this,${i})" onmouseleave="ulStars(this)" onclick="sendFeedback('${e.id}',${i},this)">${'\u2606'}</button>`;
+      starsHtml += '</div></div>';
+    }
+    html += `<div class="tl-i">
+      <div class="tl-d">${fmtDateTime(e.created_at)}</div>
+      <div class="tl-a" style="color:${agentColors[e.agent_id]||'var(--dim)'}">${esc(name)}</div>
+      <div class="tl-s ${sClass}">${e.status}</div>
+      <div class="tl-sum">${esc(sum)}</div>
+      ${starsHtml}
+    </div>`;
+  });
+  document.getElementById('timeline').innerHTML = html || '<div style="color:var(--dim);padding:20px">Sem execu\u00e7\u00f5es</div>';
+}
+
+// ═══════════════════════════════════════════
+// NETLIFY TAB (from api-assets?type=netlify_site)
+// ═══════════════════════════════════════════
+function renderNetlify() {
+  const all = netlifyAssets;
+  const legacy = all.filter(a => (a.tags||[]).includes('legacy'));
+  const active = all.filter(a => (a.tags||[]).includes('active'));
+  const dup = all.filter(a => (a.tags||[]).includes('duplicate'));
+
+  document.getElementById('netlify-summary').innerHTML = `
+    <div class="card hc hc-ok"><div class="lb">Total Sites</div><div class="vl">${all.length}</div><div class="dt">Da tabela claudius_assets</div></div>
+    <div class="card hc hc-ok"><div class="lb">Activos</div><div class="vl">${active.length}</div><div class="dt">Tag: active</div></div>
+    <div class="card hc ${legacy.length?'hc-warn':'hc-ok'}"><div class="lb">Legacy</div><div class="vl">${legacy.length}</div><div class="dt">Mantidos por decis&atilde;o</div></div>
+    <div class="card hc ${dup.length?'hc-warn':'hc-ok'}"><div class="lb">Duplicados</div><div class="vl">${dup.length}</div><div class="dt">${dup.length?'Considerar limpeza':'Limpo'}</div></div>
+  `;
+
+  let html = '';
+  all.forEach(a => {
+    const isLegacy = (a.tags||[]).includes('legacy') || (a.tags||[]).includes('duplicate');
+    const statusBadge = a.status === 'active' ? 'nl-ready' : 'nl-error';
+    html += `<div class="nl" style="${isLegacy?'opacity:.6':''}">
+      <div class="nl-h">
+        <span class="nl-nm">${esc(a.name)}</span>
+        <span class="nl-st ${statusBadge}">${esc(a.status||'unknown')}</span>
+      </div>
+      <div class="nl-url"><a href="${a.url||'#'}" target="_blank">${esc(a.url||'')}</a></div>
+      <div class="nl-meta">
+        <span>${esc(a.display_name||a.name)}</span>
+        ${(a.tags||[]).length?'<span>Tags: '+(a.tags||[]).join(', ')+'</span>':''}
+      </div>
+    </div>`;
+  });
+  document.getElementById('netlify-cards').innerHTML = html || '<div style="color:var(--dim);padding:20px">Sem sites Netlify</div>';
+}
+
+// ═══════════════════════════════════════════
+// GITHUB TAB (from api-assets?type=github_repo)
+// ═══════════════════════════════════════════
+function renderGitHub() {
+  const all = githubAssets;
+  const pub = all.filter(a => a.metadata?.visibility === 'public' || !a.metadata?.visibility).length;
+  const priv = all.filter(a => a.metadata?.visibility === 'private').length;
+
+  document.getElementById('github-summary').innerHTML = `
+    <div class="card hc ${all.length?'hc-ok':'hc-warn'}"><div class="lb">Total Repos</div><div class="vl">${all.length}</div><div class="dt">${pub} p&uacute;blicos${priv?', '+priv+' privados':''}</div></div>
+    <div class="card hc hc-ok"><div class="lb">Fonte</div><div class="vl" style="font-size:16px">claudius_assets</div><div class="dt">Dados normalizados</div></div>
+    <div class="card hc hc-ok"><div class="lb">Owner</div><div class="vl" style="font-size:16px">${esc(all[0]?.owner||'drpalproject2028')}</div><div class="dt"><a href="https://github.com/${all[0]?.owner||'drpalproject2028'}" target="_blank" style="color:var(--blu)">Ver perfil</a></div></div>
+  `;
+
+  let html = '';
+  all.forEach(a => {
+    const vis = a.metadata?.visibility || 'public';
+    const badge = vis === 'private' ? '<span class="gh-badge gh-private">private</span>' : '<span class="gh-badge gh-public">public</span>';
+    const lang = a.metadata?.language || '';
+    const desc = a.metadata?.description || a.display_name || '';
+    html += `<div class="gh">
+      <div class="gh-nm"><a href="${a.url||'#'}" target="_blank">${esc(a.name)}</a> ${badge}</div>
+      <div class="gh-desc">${esc(desc || 'Sem descri\u00e7\u00e3o')}</div>
+      <div class="gh-meta">
+        ${lang?'<span>&#128309; '+esc(lang)+'</span>':''}
+        ${a.last_seen_at?'<span>&#128337; '+fmtDate(a.last_seen_at)+'</span>':''}
+        ${(a.tags||[]).length?'<span>Tags: '+(a.tags||[]).join(', ')+'</span>':''}
+      </div>
+    </div>`;
+  });
+  document.getElementById('github-cards').innerHTML = html || '<div style="color:var(--dim);padding:20px">Sem repos GitHub registados. Executa sync-github.</div>';
+}
+
+// ═══════════════════════════════════════════
+// N8N TAB (from api-assets?type=n8n_workflow)
+// ═══════════════════════════════════════════
+function renderN8N() {
+  const all = n8nAssets;
+
+  // Mestre de Nada cycle calculation
+  const cycleStart = new Date('2026-03-16');
+  const today = new Date();
+  const dayOfCycle = Math.floor((today - cycleStart) / 86400000) + 1;
+  const totalDays = 78;
+  const currentCard = dayOfCycle <= totalDays ? dayOfCycle : ((dayOfCycle - 1) % totalDays) + 1;
+  const daysRemaining = totalDays - currentCard;
+  const progressPct = Math.round(currentCard / totalDays * 100);
+
+  document.getElementById('n8n-summary').innerHTML = `
+    <div class="card hc hc-ok"><div class="lb">Mestre de Nada</div><div class="vl">Dia ${currentCard}/78</div><div class="dt">${daysRemaining} dias restantes &bull; ${progressPct}%</div></div>
+    <div class="card hc ${all.length?'hc-ok':'hc-warn'}"><div class="lb">Workflows n8n</div><div class="vl">${all.length}</div><div class="dt">Na tabela de assets</div></div>
+    <div class="card hc hc-ok"><div class="lb">Progresso</div><div class="vl">${progressPct}%</div><div class="dt">Ciclo de 78 dias</div></div>
+  `;
+
+  let html = '';
+  all.forEach(w => {
+    const steps = w.metadata?.steps || [];
+    const schedule = w.metadata?.schedule || 'Sem schedule';
+    const wStatus = w.status || 'unknown';
+
+    html += `<div class="n8n-wf">
+      <h4>${esc(w.display_name || w.name)}</h4>
+      <div class="n8n-sch">&#128337; ${esc(schedule)} &bull; <span style="color:${wStatus==='active'?'var(--grn)':'var(--red)'}">${wStatus.toUpperCase()}</span></div>
+      ${steps.length ? `<div class="n8n-pipe">${steps.map((s,i) => `<span class="n8n-step">${esc(s)}</span>${i<steps.length-1?'<span class="n8n-arrow">&rarr;</span>':''}`).join('')}</div>` : ''}
+      <div style="margin-top:12px">
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px">
+          <span style="color:var(--dim)">Progresso do ciclo</span>
+          <span style="color:var(--gold);font-family:'JetBrains Mono',monospace">${currentCard}/${totalDays}</span>
+        </div>
+        <div style="height:8px;background:var(--s2);border-radius:4px;overflow:hidden">
+          <div style="height:100%;width:${progressPct}%;background:linear-gradient(90deg,var(--gold-d),var(--gold));border-radius:4px;transition:width .5s"></div>
+        </div>
+      </div>
+    </div>`;
+  });
+
+  if (!all.length) {
+    html = '<div style="color:var(--dim);padding:20px">Sem workflows n8n registados. O seed j&aacute; criou o Mestre de Nada?</div>';
+  }
+  document.getElementById('n8n-workflows').innerHTML = html;
+}
+
+// ═══════════════════════════════════════════
+// INCIDENTS TAB (from api-incidents — replaces Patterns)
+// ═══════════════════════════════════════════
+function renderIncidents() {
+  let html = '';
+  if (!incidentsData.length) {
+    html = '<div style="color:var(--dim);padding:20px">&#9989; Sem incidentes abertos. Sistema saud&aacute;vel.</div>';
+  }
+  incidentsData.forEach(inc => {
+    const sevColor = {critical:'var(--red)',high:'var(--org)',medium:'var(--blu)',low:'var(--dim)'}[inc.severity] || 'var(--dim)';
+    const recs = inc.claudius_recommendations || [];
+    html += `<div class="pi">
+      <div class="pi-h">
+        <span class="pi-t" style="color:${sevColor}">${esc(inc.title)}</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="lvl lv-${inc.severity[0]}">${inc.severity.toUpperCase()}</span>
+          <span style="font-size:9px;padding:1px 5px;border-radius:3px;background:var(--org-d);color:var(--org)">${inc.status}</span>
+        </div>
+      </div>
+      <div class="pi-d">${esc(inc.summary||'')}</div>
+      ${recs.length ? `<div style="margin-top:6px;padding-left:12px;border-left:2px solid var(--gold-d)">${recs.map(r => `<div style="font-size:11px;color:var(--gold);margin-top:4px">&#9889; ${esc(r.title)} <span style="color:var(--dim)">(confiança ${Math.round(r.confidence*100)}%)</span></div>`).join('')}</div>` : ''}
+      <div style="font-size:10px;color:var(--mut);margin-top:4px">Detectado: ${fmtDateTime(inc.first_seen_at)} &bull; &Uacute;ltimo: ${fmtDateTime(inc.last_seen_at)} &bull; Fonte: ${esc(inc.detection_source||'')}</div>
+    </div>`;
+  });
+  document.getElementById('incidents-list').innerHTML = html;
+}
+
+// ═══════════════════════════════════════════
+// CHARTS (from execData already loaded)
+// ═══════════════════════════════════════════
+function renderCharts() {
+  // Executions by day
+  const byDay = {};
+  execData.forEach(e => {
+    const d = new Date(e.created_at).toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit',timeZone:'Europe/Lisbon'});
+    if (!byDay[d]) byDay[d] = {success:0,auth_warning:0,partial:0,failed:0};
+    const s = e.status === 'success' ? 'success' : e.status === 'auth_warning' ? 'auth_warning' : e.status === 'partial' ? 'partial' : 'failed';
+    byDay[d][s]++;
+  });
+  const days = Object.keys(byDay).reverse();
+  const ctx1 = document.getElementById('execChart').getContext('2d');
+  if (window._c1) window._c1.destroy();
+  window._c1 = new Chart(ctx1, {
+    type:'bar',
+    data:{
+      labels:days,
+      datasets:[
+        {label:'Success',data:days.map(d=>byDay[d].success),backgroundColor:'#22c55e',borderRadius:4},
+        {label:'Auth Warning',data:days.map(d=>byDay[d].auth_warning),backgroundColor:'#eab308',borderRadius:4},
+        {label:'Partial',data:days.map(d=>byDay[d].partial),backgroundColor:'#f59e0b',borderRadius:4},
+        {label:'Failed',data:days.map(d=>byDay[d].failed),backgroundColor:'#ef4444',borderRadius:4}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#71717a',font:{size:10}}}},scales:{x:{stacked:true,ticks:{color:'#52525b'},grid:{color:'#1a1a28'}},y:{stacked:true,ticks:{color:'#52525b',stepSize:1},grid:{color:'#1a1a28'}}}}
+  });
+
+  // Executions by agent (doughnut)
+  const byAgent = {};
+  execData.forEach(e => {
+    const k = (e.agent_id||'').replace('claudius-','');
+    byAgent[k] = (byAgent[k]||0)+1;
+  });
+  const agentNames = Object.keys(byAgent);
+  const palette = ['#3b82f6','#a855f7','#f59e0b','#c084fc','#22c55e','#06b6d4','#f472b6','#a3e635','#818cf8','#fb923c','#e879f9','#34d399'];
+  const ctx2 = document.getElementById('agentChart').getContext('2d');
+  if (window._c2) window._c2.destroy();
+  window._c2 = new Chart(ctx2, {
+    type:'doughnut',
+    data:{
+      labels:agentNames.map(n=>n+' ('+byAgent[n]+')'),
+      datasets:[{data:agentNames.map(n=>byAgent[n]),backgroundColor:agentNames.map((_,i)=>palette[i%palette.length]),borderWidth:0,hoverOffset:6}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'right',labels:{color:'#71717a',font:{size:10},padding:6,usePointStyle:true,pointStyleWidth:8}}}}
+  });
+}
+
+// ═══════════════════════════════════════════
+// FEEDBACK TAB
+// ═══════════════════════════════════════════
+function renderFeedback() {
+  const totalFb = feedbackData.length;
+  const avgAll = totalFb ? (feedbackData.reduce((a,f)=>a+f.score,0)/totalFb).toFixed(1) : '\u2014';
+  const agentScores = {};
+  feedbackData.forEach(f => {
+    const exec = execData.find(e => e.id === f.execution_id);
+    if (exec) {
+      const name = (exec.agent_id||'').replace('claudius-','');
+      if (!agentScores[name]) agentScores[name] = [];
+      agentScores[name].push(f.score);
+    }
+  });
+  let bestAgent = '\u2014', bestAvg = 0;
+  Object.entries(agentScores).forEach(([name, scores]) => {
+    const avg = scores.reduce((a,b)=>a+b,0)/scores.length;
+    if (avg > bestAvg) { bestAvg = avg; bestAgent = name; }
+  });
+
+  document.getElementById('fb-summary').innerHTML = `
+    <div class="card hc ${totalFb?'hc-ok':'hc-warn'}"><div class="lb">Feedbacks</div><div class="vl">${totalFb}</div><div class="dt">${totalFb?'Desde '+fmtDate(feedbackData[feedbackData.length-1]?.created_at):'Avalia na tab Execu\u00e7\u00f5es'}</div></div>
+    <div class="card hc ${parseFloat(avgAll)>=3.5?'hc-ok':parseFloat(avgAll)>=2.5?'hc-warn':'hc-crit'}"><div class="lb">M&eacute;dia Global</div><div class="vl">${avgAll}</div><div class="dt">de 5.0</div></div>
+    <div class="card hc hc-ok"><div class="lb">Melhor Agente</div><div class="vl" style="font-size:18px">${esc(bestAgent)}</div><div class="dt">${bestAvg?bestAvg.toFixed(1)+'/5':''}</div></div>
+  `;
+
+  let listHtml = '';
+  feedbackData.slice(0, 15).forEach(f => {
+    const exec = execData.find(e => e.id === f.execution_id);
+    const agentName = exec ? (exec.agent_id||'').replace('claudius-','') : '?';
+    const sum = exec?.output_summary ? (exec.output_summary.length>80?exec.output_summary.substring(0,80)+'...':exec.output_summary) : '';
+    let starsDisp = '';
+    for (let i=1;i<=5;i++) starsDisp += i<=f.score?'\u2605':'\u2606';
+    listHtml += `<div class="fb-item">
+      <div class="tl-d">${fmtDateTime(f.created_at)}</div>
+      <div class="fb-stars-display">${starsDisp}</div>
+      <div class="tl-a" style="min-width:70px">${esc(agentName)}</div>
+      <div class="tl-sum">${esc(sum)}</div>
+    </div>`;
+  });
+  document.getElementById('fb-list').innerHTML = listHtml || '<div style="color:var(--dim);padding:20px;text-align:center">Sem feedback ainda</div>';
+
+  // Feedback chart
+  const agNames = Object.keys(agentScores);
+  const agAvgs = agNames.map(n => (agentScores[n].reduce((a,b)=>a+b,0)/agentScores[n].length));
+  const ctx = document.getElementById('fbChart').getContext('2d');
+  if (window._c3) window._c3.destroy();
+  if (agNames.length) {
+    window._c3 = new Chart(ctx, {
+      type:'bar',
+      data:{labels:agNames, datasets:[{label:'M\u00e9dia',data:agAvgs,backgroundColor:agNames.map((_,i)=>['#3b82f6','#a855f7','#f59e0b','#c084fc','#22c55e'][i%5]),borderRadius:6}]},
+      options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{min:0,max:5,ticks:{color:'#52525b',stepSize:1},grid:{color:'#1a1a28'}},y:{ticks:{color:'#e4e4e7',font:{size:11}},grid:{display:false}}}}
+    });
+  } else {
+    ctx.font = '13px Inter'; ctx.fillStyle = '#71717a'; ctx.textAlign = 'center';
+    ctx.fillText('Sem dados de feedback', ctx.canvas.width/2, ctx.canvas.height/2);
+  }
+}
+
+// ═══════════════════════════════════════════
+// UTILITIES
+// ═══════════════════════════════════════════
+function sw(id, el) {
+  document.querySelectorAll('.tc').forEach(t=>{t.classList.remove('act');t.style.display='none'});
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('act'));
+  const target = document.getElementById('t-'+id);
+  target.classList.add('act');
+  target.style.display='block';
+  el.classList.add('act');
+}
+
+function hlStars(el, n) {
+  const stars = el.parentElement.querySelectorAll('.star');
+  stars.forEach((s,i) => { if(i<n) s.classList.add('lit'); else s.classList.remove('lit'); });
+}
+function ulStars(el) {
+  const stars = el.parentElement.querySelectorAll('.star');
+  stars.forEach(s => s.classList.remove('lit'));
+}
+
+function fmtDate(d) { if(!d)return'\u2014'; return new Date(d).toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit',timeZone:'Europe/Lisbon'}); }
+function fmtDateTime(d) { if(!d)return'\u2014'; const dt=new Date(d); return dt.toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit',timeZone:'Europe/Lisbon'})+' '+dt.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Lisbon'}); }
+function esc(s) { if(!s)return''; const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+loadAll();
+setInterval(loadAll, 300000); // auto-refresh 5 min
+</script>
+</body>
+</html>

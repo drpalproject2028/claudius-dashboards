@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>PACT by PALCORE</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f0e0;
+  --surface: #ffffff;
+  --surface-low: #f9f3e3;
+  --surface-mid: #f3eede;
+  --border: rgba(191,201,193,0.15);
+  --border-solid: #d9ddd6;
+  --green: #2d7a5a;
+  --green-dark: #235f44;
+  --green-light: rgba(45,122,90,0.08);
+  --green-glow: rgba(45,122,90,0.12);
+  --blue: #2a5a8f;
+  --blue-light: rgba(42,90,143,0.08);
+  --gold: #c9a84c;
+  --gold-light: rgba(201,168,76,0.10);
+  --gold-glow: rgba(201,168,76,0.15);
+  --ruby: #8b2942;
+  --ruby-light: rgba(139,41,66,0.08);
+  --amber: #d97706;
+  --amber-light: rgba(217,119,6,0.08);
+  --purple: #7c3aed;
+  --purple-light: rgba(124,58,237,0.08);
+  --cyan: #0891b2;
+  --cyan-light: rgba(8,145,178,0.08);
+  --text: #1f2937;
+  --text-mid: #4a5568;
+  --text-muted: #8a9a90;
+  --shadow-sm: 0 2px 8px rgba(31,41,55,0.04);
+  --shadow-md: 0 8px 32px rgba(31,41,55,0.06);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); max-width: 430px; margin: 0 auto; min-height: 100dvh; -webkit-font-smoothing: antialiased; }
+.serif { font-family: 'Cormorant Garamond', Georgia, serif; }
+.material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24; }
+.filled { font-variation-settings: 'FILL' 1, 'wght' 300; }
+.hide-scroll::-webkit-scrollbar { display: none; }
+.hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ─── Top Bar ─── */
+.topbar {
+  position: fixed; top: 0; left: 50%; transform: translateX(-50%);
+  width: 100%; max-width: 430px; z-index: 50;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 16px 24px 12px;
+  background: rgba(245,240,224,0.85);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+}
+.topbar-brand { display: flex; align-items: baseline; gap: 6px; }
+.topbar-brand h1 { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 700; color: var(--text); letter-spacing: 3px; }
+.topbar-brand span { font-size: 9px; font-weight: 500; color: var(--text-muted); letter-spacing: 2px; text-transform: uppercase; }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.avatar { width: 36px; height: 36px; border-radius: 50%; border: 1.5px solid var(--gold); display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 600; color: var(--green); background: var(--green-light); }
+.notif { color: var(--text-muted); font-size: 22px; position: relative; }
+.notif-dot { position: absolute; top: 0; right: 0; width: 6px; height: 6px; background: var(--ruby); border-radius: 50%; }
+
+/* ─── Screens ─── */
+.screen { display: none; padding: 94px 24px 120px; }
+.screen.active { display: block; }
+
+/* ─── Section shared ─── */
+.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.section-title { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 600; color: var(--text); }
+.section-badge { font-size: 9px; font-weight: 700; padding: 4px 10px; border-radius: 20px; letter-spacing: 1px; text-transform: uppercase; }
+.card { background: var(--surface); border-radius: 16px; box-shadow: var(--shadow-sm); padding: 24px; margin-bottom: 16px; }
+
+/* ─── Page Title ─── */
+.page-title { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 500; color: var(--text); line-height: 1.15; margin-bottom: 6px; }
+.page-subtitle { font-size: 11px; font-weight: 500; color: var(--text-muted); letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 32px; }
+
+/* ─── KPI Grid ─── */
+.kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 32px; }
+.kpi { background: var(--surface); padding: 22px 20px; border-radius: 16px; box-shadow: var(--shadow-sm); position: relative; overflow: hidden; }
+.kpi::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
+.kpi.green::before { background: linear-gradient(90deg, var(--green), rgba(45,122,90,0.3)); }
+.kpi.blue::before { background: linear-gradient(90deg, var(--blue), rgba(42,90,143,0.3)); }
+.kpi.gold::before { background: linear-gradient(90deg, var(--gold), rgba(201,168,76,0.3)); }
+.kpi-label { font-size: 10px; font-weight: 600; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 10px; }
+.kpi-value { font-family: 'Inter', system-ui, sans-serif; font-size: 38px; font-weight: 800; line-height: 1; letter-spacing: -1px; }
+.kpi-value.v-green { color: var(--green); }
+.kpi-value.v-blue { color: var(--blue); }
+.kpi-value.v-gold { color: var(--gold); }
+
+/* ─── Pipeline Strip ─── */
+.pipeline-section { background: var(--surface-low); border-radius: 16px; padding: 24px; margin-bottom: 32px; }
+.pipeline-strip { display: flex; justify-content: space-between; align-items: center; position: relative; }
+.pipeline-strip::before { content: ''; position: absolute; top: 10px; left: 20px; right: 20px; height: 1px; background: linear-gradient(90deg, var(--gold), var(--border)); }
+.stage { display: flex; flex-direction: column; align-items: center; gap: 8px; position: relative; z-index: 1; }
+.stage-dot { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: white; }
+.stage-dot.active { background: var(--green); box-shadow: 0 0 0 4px var(--green-glow); }
+.stage-dot.empty { background: transparent; border: 1.5px solid var(--text-muted); color: var(--text-muted); font-size: 8px; }
+.stage-label { font-size: 8px; font-weight: 600; color: var(--text-muted); letter-spacing: 0.5px; text-align: center; max-width: 48px; }
+.stage-label.active { color: var(--text-mid); }
+
+/* ─── Ranking ─── */
+.rank-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-radius: 12px; margin-bottom: 8px; }
+.rank-row.first { background: var(--gold-light); border: 1px solid rgba(201,168,76,0.2); }
+.rank-row.other { background: var(--surface-low); }
+.rank-left { display: flex; align-items: center; gap: 14px; }
+.rank-pos { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; width: 24px; }
+.rank-name { font-size: 14px; font-weight: 600; color: var(--text); }
+.rank-pts { font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 600; color: var(--text-mid); }
+.link-green { font-size: 11px; font-weight: 600; color: var(--green); display: flex; align-items: center; gap: 4px; text-decoration: none; margin-top: 12px; }
+
+/* ─── Activity ─── */
+.activity-item { display: flex; gap: 16px; padding: 12px 0; }
+.activity-item + .activity-item { border-top: 1px solid var(--border); }
+.activity-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; }
+.activity-text { font-size: 13px; color: var(--text); line-height: 1.5; }
+.activity-text strong { font-weight: 600; }
+.activity-text .ctx { color: var(--text-muted); }
+.activity-time { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+
+/* ═══ PIPELINE KANBAN ═══ */
+.kanban-filters { display: flex; gap: 8px; margin-bottom: 20px; }
+.filter-pill { font-size: 11px; font-weight: 600; padding: 8px 16px; border-radius: 20px; border: none; cursor: pointer; transition: all 0.2s; }
+.filter-pill.active { background: var(--green); color: white; }
+.filter-pill.inactive { background: var(--surface); color: var(--text-muted); }
+.kanban-scroll { display: flex; gap: 14px; overflow-x: auto; padding-bottom: 16px; margin: 0 -24px; padding: 0 24px 16px; scroll-snap-type: x mandatory; }
+.kanban-col { flex: 0 0 260px; scroll-snap-align: start; }
+.col-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.col-title { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text-mid); display: flex; align-items: center; gap: 8px; }
+.col-dot { width: 8px; height: 8px; border-radius: 50%; }
+.col-count { font-size: 10px; font-weight: 700; color: white; background: var(--text-muted); width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.deal-card { background: var(--surface); border-radius: 14px; padding: 18px; margin-bottom: 10px; box-shadow: var(--shadow-sm); border-left: 3px solid transparent; }
+.deal-name { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.deal-prop { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; }
+.deal-price { font-family: 'Inter', system-ui, sans-serif; font-size: 16px; font-weight: 700; color: var(--gold); }
+.deal-progress { height: 3px; background: var(--surface-low); border-radius: 2px; margin: 12px 0; overflow: hidden; }
+.deal-progress-bar { height: 100%; border-radius: 2px; }
+.deal-action { font-size: 10px; font-weight: 700; color: var(--green); letter-spacing: 1px; text-transform: uppercase; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+.empty-col { border: 1.5px dashed var(--border-solid); border-radius: 14px; padding: 32px 16px; text-align: center; }
+.empty-col p { font-size: 12px; color: var(--text-muted); font-style: italic; }
+
+/* ═══ COMISSÕES ═══ */
+.profile-pills { display: flex; gap: 10px; margin-bottom: 24px; }
+.profile-pill { flex: 1; padding: 12px 8px; border-radius: 12px; border: 1.5px solid var(--border-solid); background: var(--surface); text-align: center; cursor: pointer; transition: all 0.2s; }
+.profile-pill.active { border-color: var(--green); background: var(--green); }
+.profile-pill .pill-icon { font-size: 20px; display: block; margin-bottom: 4px; }
+.profile-pill .pill-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+.profile-pill.active .pill-icon { color: white; }
+.profile-pill.active .pill-label { color: white; }
+.profile-pill:not(.active) .pill-icon,
+.profile-pill:not(.active) .pill-label { color: var(--text-muted); }
+.hero-earnings { background: var(--surface); border-radius: 16px; padding: 28px 24px; box-shadow: var(--shadow-md); border-left: 4px solid var(--gold); margin-bottom: 24px; text-align: center; }
+.hero-amount { font-family: 'Inter', system-ui, sans-serif; font-size: 52px; font-weight: 800; color: var(--gold); line-height: 1; letter-spacing: -2px; }
+.hero-unit { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+.hero-annual { font-size: 11px; font-weight: 600; color: var(--text-mid); margin-top: 12px; letter-spacing: 1px; text-transform: uppercase; }
+.breakdown-row { display: flex; justify-content: space-between; padding: 12px 0; }
+.breakdown-row + .breakdown-row { border-top: 1px solid var(--border); }
+.breakdown-label { font-size: 13px; color: var(--text-mid); }
+.breakdown-value { font-size: 13px; font-weight: 600; color: var(--text); }
+.fiscal-card { background: var(--surface-low); border-radius: 14px; padding: 20px; margin-top: 16px; }
+.fiscal-title { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; }
+.fiscal-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; }
+.fiscal-row .label { color: var(--text-mid); }
+.fiscal-row .value { font-weight: 600; }
+.fiscal-row.total { border-top: 1.5px solid var(--border-solid); padding-top: 10px; margin-top: 4px; }
+.fiscal-row.total .value { color: var(--green); font-family: 'Cormorant Garamond', serif; font-size: 18px; }
+.cta-gold { display: block; width: 100%; padding: 16px; margin-top: 24px; background: var(--gold); color: var(--text); font-family: 'Cormorant Garamond', serif; font-size: 14px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; border: none; border-radius: 12px; cursor: pointer; text-align: center; box-shadow: 0 4px 16px rgba(201,168,76,0.25); transition: all 0.2s; }
+.cta-gold:hover { background: #b8963f; }
+
+/* ═══ FISCAL ═══ */
+.form-group { margin-bottom: 20px; }
+.form-label { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; display: block; }
+.form-input { width: 100%; padding: 14px 16px; background: var(--surface-low); border: none; border-bottom: 2px solid var(--border-solid); border-radius: 8px 8px 0 0; font-size: 16px; font-family: 'Cormorant Garamond', serif; font-weight: 600; color: var(--text); outline: none; transition: border-color 0.2s; }
+.form-input:focus { border-bottom-color: var(--green); }
+.form-slider { width: 100%; -webkit-appearance: none; height: 4px; border-radius: 2px; background: var(--surface-mid); outline: none; margin-top: 8px; }
+.form-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--green); cursor: pointer; box-shadow: 0 2px 6px rgba(45,122,90,0.3); }
+.toggle-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; }
+.toggle-row + .toggle-row { border-top: 1px solid var(--border); }
+.toggle-label { font-size: 13px; font-weight: 500; color: var(--text); }
+.toggle { width: 44px; height: 24px; border-radius: 12px; background: var(--border-solid); position: relative; cursor: pointer; transition: background 0.2s; }
+.toggle.on { background: var(--green); }
+.toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: white; transition: left 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+.toggle.on::after { left: 22px; }
+.result-card { background: var(--surface); border-radius: 16px; padding: 24px; box-shadow: var(--shadow-sm); border-left: 3px solid var(--green); margin-top: 24px; }
+.result-row { display: flex; justify-content: space-between; padding: 10px 0; font-size: 14px; }
+.result-row + .result-row { border-top: 1px solid var(--border); }
+.result-row .label { color: var(--text-mid); }
+.result-row .value { font-weight: 600; }
+.result-row.total { padding-top: 14px; margin-top: 4px; border-top: 2px solid var(--border-solid); }
+.result-row.total .value { font-family: 'Inter', system-ui, sans-serif; font-size: 28px; font-weight: 800; color: var(--text); letter-spacing: -1px; }
+.savings-strip { background: var(--gold-light); border: 1px solid rgba(201,168,76,0.2); border-radius: 10px; padding: 12px 16px; margin-top: 16px; display: flex; justify-content: space-between; align-items: center; }
+.savings-strip .label { font-size: 12px; font-weight: 600; color: var(--gold); }
+.savings-strip .value { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 700; color: var(--gold); }
+.cta-green { display: block; width: 100%; padding: 16px; margin-top: 24px; background: var(--green); color: white; font-family: 'Cormorant Garamond', serif; font-size: 14px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; border: none; border-radius: 12px; cursor: pointer; text-align: center; transition: all 0.2s; }
+.cta-green:hover { background: var(--green-dark); }
+.badge-green { display: inline-block; font-size: 9px; font-weight: 700; color: var(--green); background: var(--green-light); padding: 3px 8px; border-radius: 10px; letter-spacing: 0.5px; text-transform: uppercase; margin-left: 8px; }
+
+/* ═══ TOOLS GRID ═══ */
+.tools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.tool-card { background: var(--surface); border-radius: 16px; padding: 24px 20px; box-shadow: var(--shadow-sm); cursor: pointer; transition: all 0.2s; text-align: center; }
+.tool-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.tool-card.disabled { opacity: 0.45; cursor: default; }
+.tool-card.disabled:hover { box-shadow: var(--shadow-sm); transform: none; }
+.tool-icon { width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; }
+.tool-icon .material-symbols-outlined { font-size: 26px; font-variation-settings: 'FILL' 0, 'wght' 400; }
+.tool-name { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.tool-desc { font-size: 11px; color: var(--text-muted); }
+
+/* ═══ BACK NAV ═══ */
+.back-nav { display: flex; align-items: center; gap: 8px; color: var(--green); font-size: 13px; font-weight: 600; cursor: pointer; margin-bottom: 20px; padding: 4px 0; }
+.back-nav:hover { opacity: 0.7; }
+
+/* ═══ QUESTIONNAIRE ═══ */
+.q-opt { width: 100%; padding: 14px 18px; background: var(--surface-low); border: 1.5px solid transparent; border-radius: 12px; font-size: 13px; font-weight: 500; color: var(--text); text-align: left; cursor: pointer; transition: all 0.2s; line-height: 1.4; }
+.q-opt:hover { border-color: var(--green); background: var(--green-light); }
+.q-opt.selected { border-color: var(--green); background: var(--green); color: white; font-weight: 600; }
+.kpi-info { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 11px; color: var(--text-mid); line-height: 1.6; font-family: 'Inter', sans-serif; font-weight: 400; }
+.config-member { margin-bottom: 4px; }
+.config-member .form-group { margin-bottom: 8px; }
+
+/* ═══ ASSESSMENT ═══ */
+#dashboard-personalization { margin-top: 14px; }
+.assessment-inline-summary { display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border-solid); border-radius: 999px; font-size: 11px; font-weight: 600; color: var(--text-mid); }
+.assessment-inline-pill { display: inline-flex; align-items: center; justify-content: center; min-width: 34px; height: 24px; padding: 0 10px; border-radius: 999px; background: var(--green); color: white; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; }
+.assessment-inline-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--gold); }
+.assessment-inline-cta { border: none; background: transparent; color: var(--green); font-size: 12px; font-weight: 700; cursor: pointer; padding: 0; }
+.assessment-hero { background: linear-gradient(180deg, rgba(255,255,255,0.86), rgba(249,243,227,0.96)); border-radius: 24px; box-shadow: var(--shadow-md); padding: 28px 24px; }
+.assessment-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: var(--green-light); color: var(--green); font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 16px; }
+.assessment-lead { font-size: 14px; color: var(--text-mid); line-height: 1.7; margin-bottom: 20px; }
+.assessment-path { display: grid; gap: 12px; margin-bottom: 22px; }
+.assessment-path-step { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border-radius: 16px; background: var(--surface); border: 1px solid var(--border-solid); }
+.assessment-path-step strong { width: 24px; color: var(--gold); font-size: 18px; line-height: 1; }
+.assessment-path-step span { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.5; }
+.assessment-path-step small { font-size: 11px; font-weight: 500; color: var(--text-muted); }
+.assessment-disclaimer { font-size: 12px; color: var(--text-mid); line-height: 1.6; }
+.assessment-disclaimer-inline { margin-top: 18px; }
+.assessment-header-block { margin-bottom: 24px; }
+.assessment-progress-card { background: var(--surface); border-radius: 16px; padding: 16px 18px; box-shadow: var(--shadow-sm); margin-bottom: 18px; }
+.assessment-progress-top { display: flex; justify-content: space-between; gap: 12px; font-size: 11px; font-weight: 700; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; }
+.assessment-progress-track { height: 6px; border-radius: 999px; background: var(--surface-mid); overflow: hidden; }
+.assessment-progress-value { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--green), var(--gold)); transition: width 0.25s ease; }
+.assessment-card { padding: 24px 22px; }
+.assessment-question { font-size: 26px; font-weight: 600; line-height: 1.25; margin-bottom: 18px; }
+.assessment-help { font-size: 13px; color: var(--text-mid); line-height: 1.6; margin-bottom: 18px; }
+.assessment-trait-list, .assessment-option-list, .assessment-competency-list { display: grid; gap: 12px; }
+.assessment-trait-row { display: grid; gap: 14px; padding: 16px; border-radius: 16px; background: var(--surface-low); border: 1px solid var(--border-solid); }
+.assessment-trait-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.assessment-style-mini { display: inline-flex; align-items: center; padding: 4px 8px; border-radius: 999px; font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; }
+.assessment-trait-role { font-size: 11px; font-weight: 600; color: var(--text-muted); }
+.assessment-trait-text { font-size: 14px; color: var(--text); line-height: 1.6; }
+.assessment-trait-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.assessment-mini-btn, .assessment-secondary-btn { display: inline-flex; align-items: center; justify-content: center; padding: 12px 14px; border-radius: 12px; border: 1.5px solid var(--border-solid); background: var(--surface); color: var(--text); font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+.assessment-mini-btn.selected.is-most { border-color: var(--green); background: var(--green); color: white; }
+.assessment-mini-btn.selected.is-least { border-color: var(--ruby); background: var(--ruby); color: white; }
+.assessment-secondary-btn { color: var(--green); }
+.assessment-footer-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
+.assessment-next-btn[disabled] { opacity: 0.45; cursor: not-allowed; }
+.assessment-profile-header { text-align: center; margin-bottom: 28px; }
+.assessment-profile-avatar { width: 84px; height: 84px; border-radius: 50%; border: 2px solid var(--gold); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; font-family: 'Cormorant Garamond', serif; font-size: 34px; font-weight: 700; color: var(--green); background: var(--green-light); }
+.assessment-profile-name { font-size: 28px; margin-bottom: 4px; }
+.assessment-profile-store { font-size: 11px; color: var(--text-muted); letter-spacing: 2px; text-transform: uppercase; }
+.assessment-code-badge { min-width: 42px; height: 28px; display: inline-flex; align-items: center; justify-content: center; padding: 0 10px; border-radius: 999px; background: var(--text); color: white; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+.assessment-card-copy { font-size: 13px; color: var(--text-mid); line-height: 1.6; margin-bottom: 16px; }
+.assessment-quadrant-wrap, .assessment-radar-wrap { margin: 12px 0 18px; }
+.assessment-style-summary { display: grid; gap: 12px; margin-bottom: 16px; }
+.assessment-style-summary-item { display: flex; gap: 12px; align-items: flex-start; }
+.assessment-style-summary-item strong { display: block; font-size: 13px; color: var(--text); margin-bottom: 2px; }
+.assessment-style-summary-item span { font-size: 12px; color: var(--text-mid); line-height: 1.5; }
+.assessment-style-dot { width: 12px; height: 12px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+.assessment-coaching-note { background: var(--surface-low); border-left: 3px solid var(--gold); border-radius: 0 12px 12px 0; padding: 14px 16px; font-size: 13px; color: var(--text-mid); line-height: 1.6; margin-bottom: 16px; }
+.assessment-competency-row { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text-mid); }
+.assessment-competency-row:last-child { border-bottom: none; }
+.assessment-competency-row strong { color: var(--text); }
+.assessment-commercial-card { padding: 18px; border-radius: 16px; background: var(--surface-low); margin-bottom: 14px; }
+.assessment-commercial-card p { font-size: 13px; color: var(--text-mid); line-height: 1.6; margin: 12px 0; }
+.assessment-commercial-meta { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; color: var(--text-mid); }
+.assessment-commercial-meta strong { color: var(--text); font-size: 15px; }
+.assessment-commercial-badge { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+.assessment-commercial-badge.is-green { background: var(--green-light); color: var(--green); }
+.assessment-commercial-badge.is-gold { background: var(--gold-light); color: var(--gold); }
+.assessment-commercial-badge.is-blue { background: var(--blue-light); color: var(--blue); }
+.assessment-empty-text { font-size: 13px; color: var(--text-mid); line-height: 1.7; margin-bottom: 16px; }
+.assessment-banner { display: flex; gap: 12px; padding: 16px 18px; border-radius: 16px; background: var(--gold-light); border: 1px solid rgba(201,168,76,0.25); margin-bottom: 18px; }
+.assessment-banner strong { display: block; font-size: 13px; color: var(--text); margin-bottom: 4px; }
+.assessment-banner p, .assessment-commercial-note { font-size: 12px; color: var(--text-mid); line-height: 1.6; }
+.assessment-commercial-note { margin-bottom: 18px; }
+
+/* ─── Bottom Nav ─── */
+.bottomnav {
+  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 100%; max-width: 430px; z-index: 50;
+  display: flex; justify-content: space-around; align-items: center;
+  padding: 8px 16px 28px;
+  background: rgba(243,238,222,0.92);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+}
+.nav-item { display: flex; flex-direction: column; align-items: center; gap: 3px; text-decoration: none; padding: 6px 12px; transition: all 0.2s; cursor: pointer; position: relative; }
+.nav-item .material-symbols-outlined { font-size: 22px; }
+.nav-item .nav-label { font-size: 9px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; }
+.nav-item.active { color: var(--green); }
+.nav-item.active::after { content: ''; position: absolute; bottom: -2px; width: 16px; height: 2px; background: var(--gold); border-radius: 1px; }
+.nav-item.inactive { color: var(--text-muted); opacity: 0.5; }
+
+@media (min-width: 431px) { body { border-left: 1px solid var(--border); border-right: 1px solid var(--border); } }
+</style>
+</head>
+<body>
+
+<!-- Top Bar -->
+<header class="topbar">
+  <div class="topbar-brand">
+    <h1>PACT</h1>
+    <span>by Palcore</span>
+  </div>
+  <div class="topbar-right">
+    <div class="notif" onclick="switchScreen('config', null)" style="cursor:pointer">
+      <span class="material-symbols-outlined">settings</span>
+    </div>
+    <div class="notif">
+      <span class="material-symbols-outlined">notifications</span>
+      <div class="notif-dot"></div>
+    </div>
+    <div class="avatar" id="topbar-avatar" onclick="switchScreen('perfil', null)" style="cursor:pointer">C</div>
+  </div>
+</header>
+
+<!-- ═══════════ SCREEN: ONBOARDING ═══════════ -->
+<div class="screen" id="screen-onboarding">
+  <div id="assessment-onboarding-root"></div>
+</div>
+
+<!-- Beta banner - inside flow, not fixed -->
+
+
+<!-- ═══════════ SCREEN 1: DASHBOARD ═══════════ -->
+<div class="screen active" id="screen-dashboard">
+  <div style="background:#1f2937;text-align:center;padding:8px 0;border-radius:10px;margin-bottom:24px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold)">Versão de teste · PACT v0.1 Beta</div>
+
+  <section style="margin-bottom:32px">
+    <h2 class="page-title serif" id="dashboard-greeting">Boa tarde, Consultor</h2>
+    <p class="page-subtitle" id="dashboard-team-label">Equipa Alatus</p>
+    <div id="dashboard-personalization"></div>
+  </section>
+
+  <section class="kpi-grid">
+    <div class="kpi green" onclick="toggleInfo(this)">
+      <div class="kpi-label">Processos activos <span class="material-symbols-outlined" style="font-size:11px;vertical-align:middle;color:var(--text-muted)">info</span></div>
+      <div class="kpi-value v-green">3</div>
+      <div class="kpi-info">Clientes com pelo menos uma fase do pipeline iniciada e sem escritura concluída.</div>
+    </div>
+    <div class="kpi blue" onclick="toggleInfo(this)">
+      <div class="kpi-label">Visitas este mês <span class="material-symbols-outlined" style="font-size:11px;vertical-align:middle;color:var(--text-muted)">info</span></div>
+      <div class="kpi-value v-blue">7</div>
+      <div class="kpi-info">Cada saída com um cliente para visitar imóveis conta como uma visita, independentemente do número de imóveis visitados nessa saída. Se o mesmo cliente for levado a visitar num dia diferente, conta como nova visita.</div>
+    </div>
+    <div class="kpi green" onclick="toggleInfo(this)">
+      <div class="kpi-label">Taxa de conversão <span class="material-symbols-outlined" style="font-size:11px;vertical-align:middle;color:var(--text-muted)">info</span></div>
+      <div class="kpi-value v-green">23%</div>
+      <div class="kpi-info">Percentagem de leads qualificados que resultaram em escritura nos últimos 12 meses. Cálculo: escrituras ÷ leads qualificados × 100.</div>
+    </div>
+    <div class="kpi gold" onclick="toggleInfo(this)">
+      <div class="kpi-label">Comissão prevista <span class="material-symbols-outlined" style="font-size:11px;vertical-align:middle;color:var(--text-muted)">info</span></div>
+      <div class="kpi-value v-gold">4.250 €</div>
+      <div class="kpi-info">Soma das comissões estimadas dos processos activos, ponderada pela probabilidade de fecho de cada fase do pipeline.</div>
+    </div>
+  </section>
+
+  <section class="pipeline-section">
+    <div class="section-header">
+      <h3 class="section-title serif">Pipeline</h3>
+      <span class="section-badge" style="color:var(--green);background:var(--green-light)">4 processos</span>
+    </div>
+    <div class="pipeline-strip">
+      <div class="stage"><div class="stage-dot active">2</div><div class="stage-label active">Qualif.</div></div>
+      <div class="stage"><div class="stage-dot active">1</div><div class="stage-label active">Visitas</div></div>
+      <div class="stage"><div class="stage-dot empty">0</div><div class="stage-label">Oferta</div></div>
+      <div class="stage"><div class="stage-dot active">1</div><div class="stage-label active">CPCV</div></div>
+      <div class="stage"><div class="stage-dot empty">0</div><div class="stage-label">Crédito</div></div>
+      <div class="stage"><div class="stage-dot empty">0</div><div class="stage-label">Escritura</div></div>
+    </div>
+  </section>
+
+  <!-- Funil de Conversão Comprador -->
+  <section class="card" onclick="toggleInfo(this)">
+    <div class="section-header" style="margin-bottom:4px">
+      <h3 class="section-title serif">Funil do comprador</h3>
+      <span class="material-symbols-outlined" style="font-size:14px;color:var(--text-muted)">info</span>
+    </div>
+    <div class="kpi-info" style="margin-bottom:16px">Taxas de conversão entre cada fase do processo de compra. Barra colorida = equipa 2025. Marca dourada = equipa 2024. Dados reais acumulados.</div>
+
+    <!-- Funnel visual -->
+    <div style="margin-bottom:8px">
+      <!-- Stage: CC → Visita -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+        <div style="flex:0 0 70px;text-align:right">
+          <div style="font-size:9px;font-weight:600;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase">Contacto</div>
+          <div style="font-size:9px;color:var(--text-muted)">→ Visita</div>
+        </div>
+        <div style="flex:1;position:relative">
+          <div style="height:24px;background:var(--surface-low);border-radius:6px;overflow:hidden;position:relative">
+            <div style="height:100%;width:30%;background:var(--green);border-radius:6px;display:flex;align-items:center;justify-content:flex-end;padding-right:8px">
+              <span style="font-size:11px;font-weight:800;color:white">30%</span>
+            </div>
+            <div style="position:absolute;top:0;bottom:0;left:22%;width:2px;background:var(--gold);border-radius:1px"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:3px">
+            <span style="font-size:8px;color:var(--gold);font-weight:600">2024: 22%</span>
+            <span style="font-size:8px;color:var(--green);font-weight:600">2025: 30% ↑</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stage: Visita → Oferta -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+        <div style="flex:0 0 70px;text-align:right">
+          <div style="font-size:9px;font-weight:600;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase">Visita</div>
+          <div style="font-size:9px;color:var(--text-muted)">→ Oferta</div>
+        </div>
+        <div style="flex:1;position:relative">
+          <div style="height:24px;background:var(--surface-low);border-radius:6px;overflow:hidden;position:relative">
+            <div style="height:100%;width:37%;background:var(--amber);border-radius:6px;display:flex;align-items:center;justify-content:flex-end;padding-right:8px">
+              <span style="font-size:11px;font-weight:800;color:white">37%</span>
+            </div>
+            <div style="position:absolute;top:0;bottom:0;left:48%;width:2px;background:var(--gold);border-radius:1px"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:3px">
+            <span style="font-size:8px;color:var(--gold);font-weight:600">2024: 48%</span>
+            <span style="font-size:8px;color:var(--amber);font-weight:600">2025: 37% ↓</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stage: Oferta → Fecho -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+        <div style="flex:0 0 70px;text-align:right">
+          <div style="font-size:9px;font-weight:600;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase">Oferta</div>
+          <div style="font-size:9px;color:var(--text-muted)">→ Fecho</div>
+        </div>
+        <div style="flex:1;position:relative">
+          <div style="height:24px;background:var(--surface-low);border-radius:6px;overflow:hidden;position:relative">
+            <div style="height:100%;width:60%;background:var(--green);border-radius:6px;display:flex;align-items:center;justify-content:flex-end;padding-right:8px">
+              <span style="font-size:11px;font-weight:800;color:white">60%</span>
+            </div>
+            <div style="position:absolute;top:0;bottom:0;left:35%;width:2px;background:var(--gold);border-radius:1px"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:3px">
+            <span style="font-size:8px;color:var(--gold);font-weight:600">2024: 35%</span>
+            <span style="font-size:8px;color:var(--green);font-weight:600">2025: 60% ↑</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Global rate -->
+    <div style="text-align:center;padding:12px;background:var(--surface-low);border-radius:10px;margin-top:12px">
+      <div style="font-size:9px;font-weight:600;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px">Taxa global contacto → fecho</div>
+      <div style="font-family:'Inter';font-size:28px;font-weight:800;color:var(--green)">6,6%</div>
+      <div style="font-size:10px;color:var(--text-muted);margin-top:2px">2024: 3,7% · Fonte: relatórios acumulados ERA Porto Baixa</div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="section-header"><h3 class="section-title serif">Ranking da equipa</h3></div>
+    <div class="rank-row first"><div class="rank-left"><div class="rank-pos" style="color:var(--gold)">1</div><div class="rank-name">Consultor A</div></div><div class="rank-pts">142 pts</div></div>
+    <div class="rank-row other"><div class="rank-left"><div class="rank-pos" style="color:var(--text-muted)">2</div><div class="rank-name">Consultor B</div></div><div class="rank-pts">128 pts</div></div>
+    <div class="rank-row other"><div class="rank-left"><div class="rank-pos" style="color:var(--text-muted)">3</div><div class="rank-name">Consultor C</div></div><div class="rank-pts">95 pts</div></div>
+    <a href="#" class="link-green">Ver classificação completa <span class="material-symbols-outlined" style="font-size:14px">arrow_forward</span></a>
+  </section>
+
+  <section style="margin-top:24px">
+    <div class="section-header" style="margin-bottom:12px"><h3 class="section-title serif">Actividade recente</h3></div>
+    <div class="activity-item"><div class="activity-dot" style="background:var(--blue)"></div><div><div class="activity-text"><strong>Cliente A</strong> <span class="ctx">avançou para Visitas</span></div><div class="activity-time">há 2 horas</div></div></div>
+    <div class="activity-item"><div class="activity-dot" style="background:var(--green)"></div><div><div class="activity-text"><strong>Cliente B</strong> <span class="ctx">· Novo lead · T2 Cedofeita</span></div><div class="activity-time">hoje às 10:15</div></div></div>
+    <div class="activity-item"><div class="activity-dot" style="background:var(--gold)"></div><div><div class="activity-text"><strong>Estudo de mercado</strong> <span class="ctx">Rua de São Vítor concluído</span></div><div class="activity-time">ontem</div></div></div>
+  </section>
+</div>
+
+<!-- ═══════════ SCREEN 2: PIPELINE ═══════════ -->
+<div class="screen" id="screen-pipeline">
+  <h2 class="page-title serif">Pipeline</h2>
+  <p class="page-subtitle">Acompanhamento de processos</p>
+
+  <div class="kanban-filters">
+    <button class="filter-pill active">Todos</button>
+    <button class="filter-pill inactive">Os meus</button>
+  </div>
+
+  <div class="kanban-scroll hide-scroll">
+    <!-- Qualificação -->
+    <div class="kanban-col">
+      <div class="col-header">
+        <div class="col-title"><div class="col-dot" style="background:var(--blue)"></div>Qualificação</div>
+        <div class="col-count" style="background:var(--blue)">2</div>
+      </div>
+      <div class="deal-card" style="border-left-color:var(--blue)">
+        <div class="deal-name serif">Cliente A</div>
+        <div class="deal-prop">T3 Boavista · Comprador</div>
+        <div class="deal-price">285.000 €</div>
+        <div class="deal-progress"><div class="deal-progress-bar" style="width:60%;background:var(--blue)"></div></div>
+        <div class="deal-action">Próximo passo <span class="material-symbols-outlined" style="font-size:14px">arrow_forward</span></div>
+      </div>
+      <div class="deal-card" style="border-left-color:var(--blue)">
+        <div class="deal-name serif">Cliente B</div>
+        <div class="deal-prop">T2 Cedofeita · Comprador</div>
+        <div class="deal-price">195.000 €</div>
+        <div class="deal-progress"><div class="deal-progress-bar" style="width:20%;background:var(--blue)"></div></div>
+        <div class="deal-action">Próximo passo <span class="material-symbols-outlined" style="font-size:14px">arrow_forward</span></div>
+      </div>
+    </div>
+
+    <!-- Visitas -->
+    <div class="kanban-col">
+      <div class="col-header">
+        <div class="col-title"><div class="col-dot" style="background:var(--purple)"></div>Visitas</div>
+        <div class="col-count" style="background:var(--purple)">1</div>
+      </div>
+      <div class="deal-card" style="border-left-color:var(--purple)">
+        <div class="deal-name serif">Cliente C</div>
+        <div class="deal-prop">T4 Foz do Douro · Comprador</div>
+        <div class="deal-price">520.000 €</div>
+        <div style="font-size:11px;color:var(--text-mid);margin-top:8px;display:flex;align-items:center;gap:6px">
+          <span class="material-symbols-outlined" style="font-size:16px;color:var(--purple)">calendar_today</span>
+          Próxima visita: 2 Abril, 14h
+        </div>
+      </div>
+    </div>
+
+    <!-- Oferta -->
+    <div class="kanban-col">
+      <div class="col-header">
+        <div class="col-title"><div class="col-dot" style="background:var(--amber)"></div>Oferta</div>
+        <div class="col-count">0</div>
+      </div>
+      <div class="empty-col"><p>Sem processos nesta fase</p></div>
+    </div>
+
+    <!-- CPCV -->
+    <div class="kanban-col">
+      <div class="col-header">
+        <div class="col-title"><div class="col-dot" style="background:var(--ruby)"></div>CPCV</div>
+        <div class="col-count" style="background:var(--ruby)">1</div>
+      </div>
+      <div class="deal-card" style="border-left-color:var(--ruby)">
+        <div class="deal-name serif">Cliente D</div>
+        <div class="deal-prop">Moradia Vila Nova de Gaia</div>
+        <div class="deal-price">380.000 €</div>
+        <div style="font-size:11px;color:var(--green);margin-top:8px;font-weight:600">CPCV assinado a 28/03</div>
+      </div>
+    </div>
+
+    <!-- Crédito -->
+    <div class="kanban-col">
+      <div class="col-header">
+        <div class="col-title"><div class="col-dot" style="background:var(--cyan)"></div>Crédito</div>
+        <div class="col-count">0</div>
+      </div>
+      <div class="empty-col"><p>Sem processos nesta fase</p></div>
+    </div>
+
+    <!-- Escritura -->
+    <div class="kanban-col">
+      <div class="col-header">
+        <div class="col-title"><div class="col-dot" style="background:var(--green)"></div>Escritura</div>
+        <div class="col-count">0</div>
+      </div>
+      <div class="empty-col"><p>Sem escrituras pendentes</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ SCREEN 3: FERRAMENTAS ═══════════ -->
+<div class="screen" id="screen-ferramentas">
+  <h2 class="page-title serif">Ferramentas</h2>
+  <p class="page-subtitle">Simuladores e utilitários</p>
+
+  <div class="tools-grid">
+    <div class="tool-card" onclick="switchScreen('comissoes', null)">
+      <div class="tool-icon" style="background:var(--gold-light);color:var(--gold)">
+        <span class="material-symbols-outlined">payments</span>
+      </div>
+      <div class="tool-name">Comissões</div>
+      <div class="tool-desc">Quanto vou ganhar</div>
+    </div>
+    <div class="tool-card" onclick="switchScreen('fiscal', null)">
+      <div class="tool-icon" style="background:var(--green-light);color:var(--green)">
+        <span class="material-symbols-outlined">calculate</span>
+      </div>
+      <div class="tool-name">Fiscal</div>
+      <div class="tool-desc">Custos de aquisição</div>
+    </div>
+    <div class="tool-card" onclick="switchScreen('aps', null)">
+      <div class="tool-icon" style="background:var(--blue-light);color:var(--blue)">
+        <span class="material-symbols-outlined">handshake</span>
+      </div>
+      <div class="tool-name">Apresentação</div>
+      <div class="tool-desc">Serviços ERA</div>
+    </div>
+    <div class="tool-card disabled">
+      <div class="tool-icon" style="background:var(--purple-light);color:var(--purple)">
+        <span class="material-symbols-outlined">analytics</span>
+      </div>
+      <div class="tool-name">Estudo de mercado</div>
+      <div class="tool-desc">Em breve</div>
+    </div>
+    <div class="tool-card disabled">
+      <div class="tool-icon" style="background:var(--cyan-light);color:var(--cyan)">
+        <span class="material-symbols-outlined">folder_managed</span>
+      </div>
+      <div class="tool-name">Processos</div>
+      <div class="tool-desc">Em breve</div>
+    </div>
+    <div class="tool-card disabled">
+      <div class="tool-icon" style="background:var(--amber-light);color:var(--amber)">
+        <span class="material-symbols-outlined">school</span>
+      </div>
+      <div class="tool-name">Academia</div>
+      <div class="tool-desc">Em breve</div>
+    </div>
+    <div class="tool-card disabled">
+      <div class="tool-icon" style="background:var(--ruby-light);color:var(--ruby)">
+        <span class="material-symbols-outlined">web</span>
+      </div>
+      <div class="tool-name">Landing pages</div>
+      <div class="tool-desc">Em breve</div>
+    </div>
+    <div class="tool-card disabled">
+      <div class="tool-icon" style="background:rgba(24,119,242,0.08);color:#1877F2">
+        <span class="material-symbols-outlined">share</span>
+      </div>
+      <div class="tool-name">Redes sociais</div>
+      <div class="tool-desc">Em breve</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ SCREEN 3a: COMISSÕES (sub-ecrã) ═══════════ -->
+<div class="screen" id="screen-comissoes">
+  <div class="back-nav" onclick="switchScreen('ferramentas', null)">
+    <span class="material-symbols-outlined" style="font-size:18px">arrow_back</span>
+    <span>Ferramentas</span>
+  </div>
+
+  <h2 class="page-title serif">Quanto ganho</h2>
+  <p class="page-subtitle">Simulador de comissões</p>
+
+  <div id="commercial-profile-banner"></div>
+
+  <div class="profile-pills">
+    <div class="profile-pill" data-profile="conservador" onclick="selectCommercialProfile(this)"><span class="pill-icon">●</span><span class="pill-label">Conservador</span></div>
+    <div class="profile-pill" data-profile="equilibrado" onclick="selectCommercialProfile(this)"><span class="pill-icon">◐</span><span class="pill-label">Equilibrado</span></div>
+    <div class="profile-pill" data-profile="ambicioso" onclick="selectCommercialProfile(this)"><span class="pill-icon">▲</span><span class="pill-label">Ambicioso</span></div>
+  </div>
+
+  <p class="assessment-commercial-note" style="margin-top:-10px">
+    Este perfil comercial é escolhido por ti neste simulador. Não é derivado do estilo comportamental nem do radar de competências.
+  </p>
+
+  <div class="hero-earnings">
+    <div class="hero-amount" id="hero-amount">2.850 €</div>
+    <div class="hero-unit">por mês, líquido estimado</div>
+    <div class="hero-annual" id="hero-annual">Previsão a 12 meses: 34.200 €</div>
+  </div>
+
+  <div class="card">
+    <div class="section-header" style="margin-bottom:8px"><h3 class="section-title serif">Composição</h3></div>
+    <div class="breakdown-row"><span class="breakdown-label">Comissão média / negócio</span><span class="breakdown-value" id="commission-avg">7.500 €</span></div>
+    <div class="breakdown-row"><span class="breakdown-label">Negócios necessários / mês</span><span class="breakdown-value" id="deals-per-month">1,2</span></div>
+    <div class="breakdown-row"><span class="breakdown-label">Facturação agência / ano</span><span class="breakdown-value" id="agency-billing">90.000 €</span></div>
+    <div class="breakdown-row"><span class="breakdown-label">Intermediação de crédito</span><span class="breakdown-value" style="color:var(--green)" id="credit-bonus">+1.200 €/ano</span></div>
+
+    <div class="fiscal-card">
+      <div class="fiscal-title">Estimativa fiscal (Recibos verdes)</div>
+      <div class="fiscal-row"><span class="label">Bruto anual</span><span class="value" id="gross-annual">41.400 €</span></div>
+      <div class="fiscal-row"><span class="label">IRS estimado</span><span class="value" style="color:var(--ruby)" id="estimated-irs">−6.800 €</span></div>
+      <div class="fiscal-row"><span class="label">Segurança Social</span><span class="value" style="color:var(--ruby)" id="social-security">−4.100 €</span></div>
+      <div class="fiscal-row total"><span class="label">Líquido anual</span><span class="value" id="net-annual">30.500 €</span></div>
+    </div>
+  </div>
+
+  <button class="cta-gold" id="commitment-cta">Assumir objectivo</button>
+</div>
+
+<!-- ═══════════ SCREEN 3b: FISCAL (sub-ecrã) ═══════════ -->
+<div class="screen" id="screen-fiscal">
+  <div class="back-nav" onclick="switchScreen('ferramentas', null)">
+    <span class="material-symbols-outlined" style="font-size:18px">arrow_back</span>
+    <span>Ferramentas</span>
+  </div>
+
+  <h2 class="page-title serif">Simulador fiscal</h2>
+  <p class="page-subtitle">Custos de aquisição de imóvel</p>
+
+  <div class="card">
+    <div class="form-group">
+      <label class="form-label">Valor do imóvel</label>
+      <input class="form-input" type="text" value="250 000" id="fiscal-valor-display">
+      <input class="form-slider" type="range" min="50000" max="1000000" value="250000" step="5000" id="fiscal-slider" oninput="updateFiscal()">
+      <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text-muted);margin-top:4px"><span>50 000 €</span><span>1 000 000 €</span></div>
+    </div>
+
+    <div class="toggle-row">
+      <span class="toggle-label">Habitação própria permanente</span>
+      <div class="toggle on" id="fiscal-hpp" onclick="this.classList.toggle('on');updateFiscal()"></div>
+    </div>
+    <div class="toggle-row">
+      <span class="toggle-label">Primeira habitação</span>
+      <div class="toggle on" id="fiscal-primeira" onclick="this.classList.toggle('on');updateFiscal()"></div>
+    </div>
+    <div class="toggle-row">
+      <span class="toggle-label">Com financiamento</span>
+      <div class="toggle on" id="fiscal-fin" onclick="this.classList.toggle('on');updateFiscal()"></div>
+    </div>
+
+    <div class="form-group" style="margin-top:16px">
+      <label class="form-label">Idade do comprador</label>
+      <input class="form-input" type="number" value="30" style="width:100px" id="fiscal-idade" onchange="updateFiscal()">
+    </div>
+  </div>
+
+  <div class="result-card">
+    <div class="section-header" style="margin-bottom:8px"><h3 class="section-title serif">Resultado</h3></div>
+    <div class="result-row"><span class="label">IMT</span><span class="value" id="res-imt">0 €</span></div>
+    <div class="result-row"><span class="label">Imposto de Selo</span><span class="value" id="res-is">2 000 €</span></div>
+    <div class="result-row"><span class="label">Registos e notário</span><span class="value" id="res-reg">500 €</span></div>
+    <div class="result-row total"><span class="label">Total</span><span class="value" id="res-total">2 500 €</span></div>
+  </div>
+
+  <div class="savings-strip" id="savings-strip" style="display:none">
+    <span class="label">Poupança jovem comprador</span>
+    <span class="value" id="res-savings">0 €</span>
+  </div>
+
+  <button class="cta-green">Enviar ao cliente</button>
+</div>
+
+<!-- ═══════════ SCREEN: PERFIL ═══════════ -->
+<div class="screen" id="screen-perfil">
+  <div id="assessment-profile-root"></div>
+</div>
+
+<!-- ═══════════ SCREEN: AVALIAÇÃO ═══════════ -->
+<div class="screen" id="screen-assessment">
+  <div id="assessment-flow-root"></div>
+</div>
+
+<!-- ═══════════ SCREEN: DIRECTOR ═══════════ -->
+<div class="screen" id="screen-config">
+  <div class="back-nav" onclick="switchScreen('dashboard', null)">
+    <span class="material-symbols-outlined" style="font-size:18px">arrow_back</span>
+    <span>Painel</span>
+  </div>
+
+  <h2 class="page-title serif">Director Comercial</h2>
+  <p class="page-subtitle">Visão 360 · Área restrita</p>
+
+  <!-- Visão equipa -->
+  <div class="card">
+    <div class="section-header" style="margin-bottom:16px"><h3 class="section-title serif">Equipa — Visão geral</h3></div>
+    <div class="kpi-grid" style="margin-bottom:0">
+      <div style="text-align:center;padding:12px;background:var(--green-light);border-radius:12px">
+        <div style="font-family:'Inter';font-size:28px;font-weight:800;color:var(--green)">7</div>
+        <div style="font-size:9px;font-weight:600;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-top:4px">Consultores</div>
+      </div>
+      <div style="text-align:center;padding:12px;background:var(--blue-light);border-radius:12px">
+        <div style="font-family:'Inter';font-size:28px;font-weight:800;color:var(--blue)">12</div>
+        <div style="font-size:9px;font-weight:600;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-top:4px">Processos activos</div>
+      </div>
+      <div style="text-align:center;padding:12px;background:var(--gold-light);border-radius:12px">
+        <div style="font-family:'Inter';font-size:28px;font-weight:800;color:var(--gold)">28k €</div>
+        <div style="font-size:9px;font-weight:600;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-top:4px">Comissão equipa</div>
+      </div>
+      <div style="text-align:center;padding:12px;background:var(--ruby-light);border-radius:12px">
+        <div style="font-family:'Inter';font-size:28px;font-weight:800;color:var(--ruby)">3</div>
+        <div style="font-size:9px;font-weight:600;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-top:4px">Alertas</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alertas -->
+  <div class="card">
+    <div class="section-header" style="margin-bottom:12px"><h3 class="section-title serif">Alertas</h3></div>
+    <div class="activity-item" style="padding:8px 0">
+      <div class="activity-dot" style="background:var(--ruby)"></div>
+      <div>
+        <div class="activity-text"><strong>Consultor D</strong> <span class="ctx">sem actividade há 5 dias</span></div>
+      </div>
+    </div>
+    <div class="activity-item" style="padding:8px 0">
+      <div class="activity-dot" style="background:var(--amber)"></div>
+      <div>
+        <div class="activity-text"><strong>Cliente E</strong> <span class="ctx">processo parado em CPCV há 12 dias</span></div>
+      </div>
+    </div>
+    <div class="activity-item" style="padding:8px 0">
+      <div class="activity-dot" style="background:var(--amber)"></div>
+      <div>
+        <div class="activity-text"><strong>2 leads</strong> <span class="ctx">sem resposta há 48 horas</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ranking completo -->
+  <div class="card">
+    <div class="section-header" style="margin-bottom:12px"><h3 class="section-title serif">Ranking completo</h3></div>
+    <div class="rank-row first"><div class="rank-left"><div class="rank-pos" style="color:var(--gold)">1</div><div class="rank-name">Consultor A</div></div><div class="rank-pts">142 pts</div></div>
+    <div class="rank-row other"><div class="rank-left"><div class="rank-pos" style="color:var(--text-muted)">2</div><div class="rank-name">Consultor B</div></div><div class="rank-pts">128 pts</div></div>
+    <div class="rank-row other"><div class="rank-left"><div class="rank-pos" style="color:var(--text-muted)">3</div><div class="rank-name">Consultor C</div></div><div class="rank-pts">95 pts</div></div>
+    <div class="rank-row other"><div class="rank-left"><div class="rank-pos" style="color:var(--text-muted)">4</div><div class="rank-name">Consultor D</div></div><div class="rank-pts">87 pts</div></div>
+    <div class="rank-row other"><div class="rank-left"><div class="rank-pos" style="color:var(--text-muted)">5</div><div class="rank-name">Consultor E</div></div><div class="rank-pts">72 pts</div></div>
+    <div class="rank-row other"><div class="rank-left"><div class="rank-pos" style="color:var(--text-muted)">6</div><div class="rank-name">Consultor F</div></div><div class="rank-pts">61 pts</div></div>
+    <div class="rank-row other"><div class="rank-left"><div class="rank-pos" style="color:var(--text-muted)">7</div><div class="rank-name">Consultor G</div></div><div class="rank-pts">45 pts</div></div>
+  </div>
+
+  <!-- Configuração da equipa -->
+  <div class="card">
+    <div class="section-header" style="margin-bottom:16px"><h3 class="section-title serif">Configuração</h3></div>
+    <div class="form-group">
+      <label class="form-label">Nome da equipa</label>
+      <input class="form-input" type="text" placeholder="Ex: ALATUS" id="config-team-name">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Loja</label>
+      <input class="form-input" type="text" placeholder="Ex: ERA Porto Baixa/Centro" id="config-store">
+    </div>
+    <div style="margin-top:12px">
+      <label class="form-label">Consultores</label>
+      <div id="config-team">
+        <input class="form-input" type="text" placeholder="Consultor 1" id="c1" style="margin-bottom:6px">
+        <input class="form-input" type="text" placeholder="Consultor 2" id="c2" style="margin-bottom:6px">
+        <input class="form-input" type="text" placeholder="Consultor 3" id="c3" style="margin-bottom:6px">
+        <input class="form-input" type="text" placeholder="Consultor 4" id="c4" style="margin-bottom:6px">
+        <input class="form-input" type="text" placeholder="Consultor 5" id="c5" style="margin-bottom:6px">
+        <input class="form-input" type="text" placeholder="Consultor 6" id="c6" style="margin-bottom:6px">
+        <input class="form-input" type="text" placeholder="Consultor 7" id="c7" style="margin-bottom:6px">
+      </div>
+    </div>
+    <button class="cta-green" style="margin-top:16px" onclick="saveConfig()">Guardar configuração</button>
+  </div>
+
+  <div style="text-align:center;padding:24px 0;color:var(--text-muted);font-size:11px">
+    PACT by PALCORE · v0.1 Beta<br>
+    Versão de teste · Março 2026
+  </div>
+</div>
+
+<!-- ═══════════ SCREEN 3c: APS placeholder ═══════════ -->
+<div class="screen" id="screen-aps">
+  <div class="back-nav" onclick="switchScreen('ferramentas', null)">
+    <span class="material-symbols-outlined" style="font-size:18px">arrow_back</span>
+    <span>Ferramentas</span>
+  </div>
+
+  <h2 class="page-title serif">Apresentação de serviços</h2>
+  <p class="page-subtitle">Em construção</p>
+
+  <div class="card" style="text-align:center;padding:48px 24px">
+    <span class="material-symbols-outlined" style="font-size:48px;color:var(--blue);opacity:0.4">handshake</span>
+    <p style="margin-top:16px;color:var(--text-muted);font-size:14px">Este módulo será integrado com a app APS existente.</p>
+  </div>
+</div>
+
+<!-- Bottom Nav -->
+<nav class="bottomnav">
+  <a class="nav-item active" data-screen="dashboard" onclick="switchTab(this)">
+    <span class="material-symbols-outlined filled">grid_view</span>
+    <span class="nav-label">Painel</span>
+  </a>
+  <a class="nav-item inactive" data-screen="pipeline" onclick="switchTab(this)">
+    <span class="material-symbols-outlined">view_kanban</span>
+    <span class="nav-label">Pipeline</span>
+  </a>
+  <a class="nav-item inactive" data-screen="ferramentas" onclick="switchTab(this)">
+    <span class="material-symbols-outlined">build</span>
+    <span class="nav-label">Ferramentas</span>
+  </a>
+</nav>
+
+<script>
+function switchScreen(id, el) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+
+  // Update nav if switching to a main tab
+  const mainTabs = ['dashboard', 'pipeline', 'ferramentas'];
+  if (mainTabs.includes(id)) {
+    document.querySelectorAll('.nav-item').forEach(n => {
+      n.classList.remove('active'); n.classList.add('inactive');
+      n.querySelector('.material-symbols-outlined').classList.remove('filled');
+    });
+    const tab = document.querySelector(`.nav-item[data-screen="${id}"]`);
+    if (tab) {
+      tab.classList.remove('inactive'); tab.classList.add('active');
+      tab.querySelector('.material-symbols-outlined').classList.add('filled');
+    }
+  }
+  // For sub-screens (comissoes, fiscal, aps), highlight ferramentas
+  if (['comissoes', 'fiscal', 'aps'].includes(id)) {
+    document.querySelectorAll('.nav-item').forEach(n => {
+      n.classList.remove('active'); n.classList.add('inactive');
+      n.querySelector('.material-symbols-outlined').classList.remove('filled');
+    });
+    const tab = document.querySelector('.nav-item[data-screen="ferramentas"]');
+    tab.classList.remove('inactive'); tab.classList.add('active');
+    tab.querySelector('.material-symbols-outlined').classList.add('filled');
+  }
+  if (window.handleAssessmentScreenChange) {
+    window.handleAssessmentScreenChange(id);
+  }
+  window.scrollTo(0, 0);
+}
+
+function switchTab(el) {
+  switchScreen(el.dataset.screen, el);
+}
+
+// ═══ FISCAL CALCULATOR ═══
+function fmt(n) { return n.toLocaleString('pt-PT', {minimumFractionDigits: 0, maximumFractionDigits: 0}) + ' €'; }
+
+function calcIMT(valor, hpp, primeira) {
+  // Tabela IMT 2026 para HPP continental
+  if (hpp) {
+    if (valor <= 104261) return 0;
+    if (valor <= 142764) return valor * 0.02 - 2085.22;
+    if (valor <= 194077) return valor * 0.05 - 6367.14;
+    if (valor <= 260400) return valor * 0.07 - 10248.68;
+    if (valor <= 578598) return valor * 0.08 - 12850.68;
+    if (valor <= 1050400) return valor * 0.06;
+    return valor * 0.075;
+  } else {
+    // Secundária/investimento
+    if (valor <= 104261) return valor * 0.01;
+    if (valor <= 142764) return valor * 0.02 - 1042.61;
+    if (valor <= 194077) return valor * 0.05 - 5325.53;
+    if (valor <= 260400) return valor * 0.07 - 9207.07;
+    if (valor <= 578598) return valor * 0.08 - 11809.07;
+    if (valor <= 1050400) return valor * 0.06;
+    return valor * 0.075;
+  }
+}
+
+function updateFiscal() {
+  var slider = document.getElementById('fiscal-slider');
+  var valor = parseInt(slider.value);
+  var hpp = document.getElementById('fiscal-hpp').classList.contains('on');
+  var primeira = document.getElementById('fiscal-primeira').classList.contains('on');
+  var fin = document.getElementById('fiscal-fin').classList.contains('on');
+  var idade = parseInt(document.getElementById('fiscal-idade').value) || 30;
+
+  // Display value
+  document.getElementById('fiscal-valor-display').value = valor.toLocaleString('pt-PT');
+
+  // Jovem: <= 35 anos, primeira habitação, HPP
+  var jovem = idade <= 35 && primeira && hpp;
+
+  // IMT
+  var imt = calcIMT(valor, hpp, primeira);
+  if (jovem && valor <= 316772) imt = 0; // Isenção jovem total
+  else if (jovem) imt = calcIMT(valor, hpp, primeira); // Parcial acima do limite
+  imt = Math.max(0, Math.round(imt));
+
+  // Imposto de Selo (0.8% do valor)
+  var is = Math.round(valor * 0.008);
+
+  // Registos e notário (estimativa)
+  var reg = 500;
+
+  // IS sobre financiamento (0.6% se com financiamento, estimativa sobre 80% do valor)
+  var isFin = 0;
+  if (fin) isFin = Math.round(valor * 0.8 * 0.006);
+
+  var total = imt + is + reg + isFin;
+
+  // Poupança jovem
+  var imtNormal = Math.round(Math.max(0, calcIMT(valor, hpp, primeira)));
+  var savings = jovem ? imtNormal + is : 0;
+
+  // Update DOM
+  var imtText = fmt(imt);
+  if (jovem && imt === 0) imtText += ' <span class="badge-green">Isento</span>';
+  document.getElementById('res-imt').innerHTML = imtText;
+  document.getElementById('res-is').textContent = fmt(is + isFin);
+  document.getElementById('res-reg').textContent = fmt(reg);
+  document.getElementById('res-total').textContent = fmt(total);
+
+  var strip = document.getElementById('savings-strip');
+  if (jovem && savings > 0) {
+    strip.style.display = 'flex';
+    document.getElementById('res-savings').textContent = fmt(savings);
+  } else {
+    strip.style.display = 'none';
+  }
+}
+
+// ═══ INFO TOOLTIPS ═══
+function toggleInfo(el) {
+  var info = el.querySelector('.kpi-info');
+  if (info) info.style.display = info.style.display === 'block' ? 'none' : 'block';
+}
+
+// ═══ CONFIG ═══
+function saveConfig() {
+  var team = [];
+  for (var i = 1; i <= 7; i++) {
+    var name = document.getElementById('c' + i).value.trim();
+    if (name) team.push(name);
+  }
+  var config = {
+    team: team,
+    teamName: document.getElementById('config-team-name').value.trim(),
+    store: document.getElementById('config-store').value.trim()
+  };
+  localStorage.setItem('pact-config', JSON.stringify(config));
+  alert('Configuração guardada com sucesso.');
+  switchScreen('dashboard', null);
+}
+
+function loadConfig() {
+  try {
+    var config = JSON.parse(localStorage.getItem('pact-config') || '{}');
+    if (config.team) {
+      config.team.forEach(function(name, i) {
+        var el = document.getElementById('c' + (i + 1));
+        if (el) el.value = name;
+      });
+    }
+    if (config.teamName) document.getElementById('config-team-name').value = config.teamName;
+    if (config.store) document.getElementById('config-store').value = config.store;
+  } catch(e) {}
+}
+document.addEventListener('DOMContentLoaded', function() {
+  loadConfig();
+  updateFiscal();
+});
+
+document.querySelectorAll('.filter-pill').forEach(p => {
+  p.addEventListener('click', () => {
+    document.querySelectorAll('.filter-pill').forEach(f => { f.classList.remove('active'); f.classList.add('inactive'); });
+    p.classList.remove('inactive'); p.classList.add('active');
+  });
+});
+</script>
+<script src="assessment.js"></script>
+
+</body>
+</html>
