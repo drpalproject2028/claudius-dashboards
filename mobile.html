@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="CLAUDIUS">
+<title>CLAUDIUS Mobile</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, system-ui, sans-serif; background: #0f1a2d; color: #f5f0e0; padding: 16px; padding-top: env(safe-area-inset-top, 16px); }
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+h1 { font-size: 1.2rem; color: #c9a84c; }
+.sync-time { font-size: 0.75rem; color: #8b9bb4; }
+.card { background: #1a2a3d; border-radius: 12px; padding: 16px; margin-bottom: 12px; border-left: 3px solid #2d7a5a; }
+.card h2 { font-size: 0.9rem; color: #c9a84c; margin-bottom: 8px; }
+.card pre { font-size: 0.8rem; white-space: pre-wrap; word-break: break-word; line-height: 1.5; color: #d4dae4; }
+.card ul { font-size: 0.8rem; padding-left: 20px; line-height: 1.6; }
+.card li { margin-bottom: 4px; }
+.sites { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.site { background: #1a2a3d; border-radius: 8px; padding: 12px; text-align: center; text-decoration: none; color: #f5f0e0; font-size: 0.8rem; border: 1px solid #2a3a4d; }
+.site:active { background: #2a3a4d; }
+.status { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
+.status.ok { background: #2d7a5a; }
+.status.down { background: #8b2942; }
+.btn { display: block; width: 100%; padding: 14px; background: #2d7a5a; color: #f5f0e0; border: none; border-radius: 10px; font-size: 0.9rem; cursor: pointer; margin-top: 12px; }
+.btn:active { background: #1d5a3a; }
+.btn-copy { background: #2a5a8f; }
+.loading { text-align: center; padding: 40px; color: #8b9bb4; }
+#context-box { display: none; background: #1a2a3d; border-radius: 12px; padding: 16px; margin-top: 12px; font-size: 0.75rem; color: #d4dae4; white-space: pre-wrap; word-break: break-word; max-height: 300px; overflow-y: auto; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>CLAUDIUS</h1>
+  <span class="sync-time" id="sync-time">a carregar...</span>
+</div>
+
+<div id="content"><div class="loading">A carregar sessão...</div></div>
+
+<div class="card" style="border-left-color: #2a5a8f;">
+  <h2>Apps</h2>
+  <div class="sites" id="sites"></div>
+</div>
+
+<button class="btn btn-copy" onclick="copyContext()">Copiar contexto para Claude.ai</button>
+<div id="context-box"></div>
+
+<button class="btn" onclick="location.reload()">Actualizar</button>
+
+<script>
+const SUPABASE_URL = 'https://btkdpjlltekssobfzdhu.supabase.co';
+const PAL_API = SUPABASE_URL + '/functions/v1/pal-api';
+const AUTH = 'Bearer pal-2026-claudius';
+
+const SITES = [
+  { name: 'Dashboard', url: 'https://claudius-dashboards.vercel.app' },
+  { name: 'PACT V-B', url: 'https://claudius-dashboards.vercel.app/pact.html' },
+  { name: 'Focus Meter', url: 'https://palcore-focus-meter.vercel.app' },
+  { name: 'Decision', url: 'https://palcore-decision-partner.vercel.app' },
+  { name: 'Ex Libris', url: 'https://exlibris-generator.vercel.app' },
+];
+
+async function loadSession() {
+  try {
+    const res = await fetch(PAL_API + '/memory', { headers: { 'Authorization': AUTH } });
+    const memories = await res.json();
+    const session = memories.find(m => m.key === 'current_session_state');
+    
+    if (!session) {
+      document.getElementById('content').innerHTML = '<div class="card"><h2>Sem sessão activa</h2><pre>Nenhum session-state sincronizado.</pre></div>';
+      return;
+    }
+
+    const content = session.value.content;
+    const synced = session.value.synced_at || session.updated_at;
+    document.getElementById('sync-time').textContent = 'Sync: ' + new Date(synced).toLocaleString('pt-PT', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' });
+
+    // Parse markdown sections
+    const sections = content.split(/^## /m).filter(s => s.trim());
+    let html = '';
+    
+    for (const section of sections) {
+      const lines = section.split('\n');
+      const title = lines[0].replace(/^#+\s*/, '').trim();
+      const body = lines.slice(1).join('\n').trim();
+      if (!body) continue;
+      
+      html += `<div class="card"><h2>${title}</h2><pre>${body}</pre></div>`;
+    }
+    
+    document.getElementById('content').innerHTML = html || '<div class="card"><pre>' + content + '</pre></div>';
+    
+    // Store for copy
+    window._sessionContent = content;
+  } catch (e) {
+    document.getElementById('content').innerHTML = '<div class="card"><h2>Erro</h2><pre>' + e.message + '</pre></div>';
+  }
+}
+
+async function checkSites() {
+  const container = document.getElementById('sites');
+  for (const site of SITES) {
+    const el = document.createElement('a');
+    el.className = 'site';
+    el.href = site.url;
+    el.target = '_blank';
+    el.innerHTML = '<span class="status ok"></span> ' + site.name;
+    container.appendChild(el);
+  }
+}
+
+function copyContext() {
+  const box = document.getElementById('context-box');
+  const text = window._sessionContent || 'Sem sessão carregada.';
+  const compact = '## CLAUDIUS Context (auto-sync)\n\n' + text;
+  
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(compact).then(() => {
+      box.style.display = 'block';
+      box.textContent = '✅ Copiado! Cola no Claude.ai para continuar a sessão.';
+      setTimeout(() => { box.style.display = 'none'; }, 3000);
+    });
+  } else {
+    box.style.display = 'block';
+    box.textContent = compact;
+    const range = document.createRange();
+    range.selectNodeContents(box);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+  }
+}
+
+loadSession();
+checkSites();
+</script>
+</body>
+</html>
