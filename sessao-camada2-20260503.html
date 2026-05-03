@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<title>CLAUDIUS · Sessão Camada 2 + Auditoria · 03 Maio 2026</title>
+<style>
+  @page { size: A4; margin: 22mm 20mm; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+         color: #1a1a1a; line-height: 1.55; font-size: 11pt; }
+  h1 { color: #0a0a0f; font-size: 22pt; font-weight: 300; margin-bottom: 4pt; letter-spacing: 0.5pt; }
+  h1 .accent { color: #c9a84c; }
+  h2 { color: #0f1a2d; font-size: 14pt; font-weight: 500; margin-top: 26pt;
+       border-bottom: 1px solid #c9a84c; padding-bottom: 4pt; letter-spacing: 0.3pt; }
+  h3 { color: #2a5a8f; font-size: 12pt; font-weight: 600; margin-top: 18pt; }
+  .meta { color: #8c8474; font-size: 9pt; letter-spacing: 0.3pt;
+          border-top: 1px solid #d0c8a0; padding-top: 6pt; margin-top: 8pt; }
+  .lede { font-size: 12pt; color: #444; margin: 14pt 0 18pt; font-style: italic;
+          border-left: 3px solid #c9a84c; padding-left: 12pt; }
+  table { border-collapse: collapse; width: 100%; margin: 10pt 0; font-size: 10pt; }
+  th { background: #f5f0e0; color: #0f1a2d; padding: 6pt 8pt; text-align: left;
+       border-bottom: 2px solid #c9a84c; font-weight: 600; }
+  td { padding: 5pt 8pt; border-bottom: 1px solid #e8e4d8; vertical-align: top; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  code { font-family: "SF Mono", Menlo, monospace; font-size: 9.5pt;
+         background: #f5f0e0; color: #8b2942; padding: 1pt 4pt; border-radius: 3px; }
+  pre { background: #0f1a2d; color: #e8e4d8; padding: 10pt 14pt; border-radius: 4px;
+        font-family: "SF Mono", Menlo, monospace; font-size: 9pt; line-height: 1.4;
+        overflow-x: auto; }
+  pre code { background: transparent; color: inherit; padding: 0; }
+  .red    { color: #8b2942; font-weight: 600; }
+  .amber  { color: #c9a84c; font-weight: 600; }
+  .green  { color: #2d7a5a; font-weight: 600; }
+  .blue   { color: #2a5a8f; font-weight: 600; }
+  blockquote { border-left: 3px solid #2a5a8f; background: #f5f0e0;
+               margin: 12pt 0; padding: 8pt 14pt; font-size: 10.5pt; color: #2a3548; }
+  .seal { margin-top: 32pt; padding-top: 12pt; border-top: 2px solid #c9a84c;
+          font-size: 9.5pt; color: #8c8474; text-align: center; letter-spacing: 0.4pt; }
+  ul, ol { padding-left: 22pt; }
+  li { margin-bottom: 3pt; }
+</style>
+</head>
+<body>
+
+<h1>CLAUDIUS · <span class="accent">Camada 2 Extensões + Auditoria</span></h1>
+<div class="meta">
+  Sessão de 03 de Maio de 2026 (domingo) · Porto<br>
+  Executor: Claude Sonnet 4.6 (Mac, Claude Code) · Auditor: Claude Opus 4.7 (1M context)<br>
+  Plano de origem: <code>Pal/inbox/202605032133_plano-camada2-extensoes.md</code><br>
+  Sessões Supabase: <code>id=17</code> (execução) e <code>id=18</code> (auditoria + fix)
+</div>
+
+<p class="lede">
+  Hoje, ao fim do dia, fechei a Camada 2 do CLAUDIUS — a memória composta da
+  ressonância. O Sonnet executou um plano de 7 fases. O Opus 4.7 auditou o que
+  ele fez. Encontrou um bug crítico que o Sonnet tinha silenciado e arranjou-o.
+  Esta é a narrativa do que se passou — para o caderno.
+</p>
+
+<h2>1 · Contexto: o plano</h2>
+
+<p>
+  A Camada 2 (<code>concept_lifecycle</code> + <code>concept_occurrences</code>)
+  já estava montada e populada por 75&nbsp;347 ocorrências em 188 conceitos
+  detectados em 6 fontes (<code>chatgpt</code>, <code>claude</code>,
+  <code>live_channel</code>, <code>memory</code>, <code>ideas</code>,
+  <code>filesystem</code>). Faltava estendê-la em três frentes:
+</p>
+
+<ol>
+  <li><strong>Artefactos filtrados</strong> — extrair os ~1&nbsp;500 documentos
+      úteis dos 76&nbsp;786 catalogados em <code>claudius_artifacts</code>.</li>
+  <li><strong>GitHub commits</strong> — atravessar 26 repos e ingerir
+      <em>commit messages</em> como ocorrências, ligando a Camada 1
+      (inventário) à Camada 2 (conceitos).</li>
+  <li><strong>Dashboard visual</strong> — HTML estático no Vercel para
+      acesso a partir do iPhone.</li>
+</ol>
+
+<p>
+  O plano foi escrito pelo Opus 4.7 em sessão anterior. O Sonnet ficou
+  encarregue da execução. <strong>Padrão estabelecido</strong>: Opus pensa em
+  arquitectura, Sonnet executa. Hoje testámos a outra metade desse padrão:
+  Opus a auditar o que o Sonnet entregou.
+</p>
+
+<h2>2 · O que o Sonnet executou</h2>
+
+<table>
+  <thead>
+    <tr><th>Fase</th><th>Saída</th><th>Critério</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>P1</strong> · Artifacts</td>
+      <td><code>concept_artifacts_load.py</code> ingeriu 1&nbsp;727 ocorrências
+          de 1&nbsp;622 artefactos filtrados (md/txt/docx/pdf/jsx/tsx/js/ts/html/sql/py)
+          em 3,6 segundos.</td>
+      <td class="green">≥1&nbsp;000 ✓</td>
+    </tr>
+    <tr>
+      <td><strong>P2</strong> · Git patterns</td>
+      <td>12 padrões novos no ramo <code>operacoes/git/*</code> em
+          <code>concept_universe.py</code> (feat, fix, refactor, deploy, merge,
+          WIP, revert, hotfix, chore, docs, test, ci).</td>
+      <td class="red">Falhou silenciosamente — ver §3</td>
+    </tr>
+    <tr>
+      <td><strong>P3</strong> · Git commits</td>
+      <td><code>concept_git_load.py</code> atravessou 26/26 repos e ingeriu
+          1&nbsp;296 ocorrências de 820 commits desde Maio 2024.</td>
+      <td class="green">≥8 repos ✓ (foram 26)</td>
+    </tr>
+    <tr>
+      <td><strong>P4</strong> · Re-pulse + validação</td>
+      <td>200 conceitos atualizados, 182 alive. As 3 perguntas de validação
+          respondíveis com SQL puro.</td>
+      <td class="green">✓</td>
+    </tr>
+    <tr>
+      <td><strong>P5</strong> · Dashboard</td>
+      <td><code>concepts.html</code> em
+          <code>https://claudius-dashboards.vercel.app/concepts</code>
+          com 4 painéis (donut estados, top 10, timeline mensal,
+          search wildcard). Tema CLAUDIUS midnight + dourado.</td>
+      <td class="green">URL público 200 OK ✓</td>
+    </tr>
+    <tr>
+      <td><strong>P6</strong> · MCP tool extra</td>
+      <td>—</td>
+      <td class="amber">Opcional, adiada</td>
+    </tr>
+    <tr>
+      <td><strong>P7</strong> · Privacidade + cobertura</td>
+      <td>4 leaks com "TERESA CONCEIÇÃO" em maiúsculas (snippets do Claude
+          de Fevereiro). Função <code>sanitizar_snippet</code> corrigida com
+          <code>re.IGNORECASE</code>; 4 rows redactadas em DB.</td>
+      <td class="green">0 leaks ✓ + bug sistémico corrigido</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>
+  No fim do turno do Sonnet, ele reportou: <em>78&nbsp;370 ocorrências em 8
+  fontes, 200 conceitos, 182 alive, dashboard live, 0 privacy leaks.</em> Bom
+  fecho — aparentemente.
+</p>
+
+<h2>3 · A auditoria do Opus</h2>
+
+<p>
+  Quando ele saiu, mudei para Opus 4.7 e pedi-me uma coisa simples:
+  <em>"audita o trabalho do Sonet"</em>. O método foi cético — não confiar
+  nos números reportados, contar tudo directamente no DB.
+</p>
+
+<p>
+  Cinco queries depois, encontrei o problema:
+</p>
+
+<blockquote>
+  <strong>Os 12 padrões novos do ramo <code>operacoes/git/*</code> nunca
+  chegaram à base de dados.</strong> Zero ocorrências em DB. O Sonnet
+  reportou "84 fix · 46 feat · 28 merge · 21 docs" porque leu esses números
+  de um <em>dict em memória Python</em>, não do que persistiu em SQL.
+</blockquote>
+
+<h3>Causa raíz</h3>
+
+<p>
+  A tabela <code>concept_occurrences</code> tem uma <em>foreign key</em> para
+  <code>concept_lifecycle(concept_path)</code>. Os 12 paths novos foram
+  registados em <code>CONCEPT_META</code> no Python, mas <strong>ninguém os
+  inseriu em <code>concept_lifecycle</code></strong>. O <code>claudius_concept_pulse()</code>
+  só itera sobre paths que já existem — não cria do nada. Resultado: cada
+  INSERT batia em FK violation.
+</p>
+
+<h3>Por que ficou oculto</h3>
+
+<p>
+  A função <code>claudius_concept_ingest_batch</code> tinha esta lógica:
+</p>
+
+<pre><code>EXCEPTION WHEN OTHERS THEN
+  v_skipped := v_skipped + 1;
+END;</code></pre>
+
+<p>
+  Engole <em>qualquer</em> erro como "skipped". O Sonnet leu apenas o campo
+  <code>inserted=1296</code>, viu que a saída tinha "203 skipped" e assumiu
+  que eram duplicados idempotentes. Mas <strong>esta era a primeira corrida</strong> —
+  não havia duplicados a esperar. Os 203 eram <em>todas</em> as ocorrências
+  dos 12 patterns novos a falharem em silêncio.
+</p>
+
+<h3>Reproduzido</h3>
+
+<pre><code>INSERT INTO concept_occurrences (concept_path, ts, source, ...)
+VALUES ('/RESSONANCIA/operacoes/git/feat', now(), 'audit', ...);
+
+ERROR:  23503: insert or update on table "concept_occurrences"
+        violates foreign key constraint "concept_occurrences_concept_path_fkey"
+DETAIL: Key (concept_path)=(/RESSONANCIA/operacoes/git/feat)
+        is not present in table "concept_lifecycle".</code></pre>
+
+<h2>4 · Os 4 fixes aplicados</h2>
+
+<h3>Fix 1 — Hardening da função <code>ingest_batch</code></h3>
+
+<p>
+  Migration <code>concept_ingest_batch_v3_separate_errors</code>. A função
+  agora retorna:
+</p>
+
+<pre><code>{
+  "inserted":      &lt;count&gt;,
+  "skipped":       &lt;count&gt;,    -- já só duplicados idempotentes
+  "errors":        &lt;count&gt;,    -- &lt;-- novo
+  "error_samples": [
+    {"sqlstate": "23503", "message": "...", "concept_path": "...", "source": "..."}
+  ]
+}</code></pre>
+
+<p>
+  Sample dos primeiros 5 SQLERRMs. O próximo bug deste tipo nunca mais fica
+  invisível. <strong>Esta é a lição mais valiosa da sessão.</strong>
+</p>
+
+<h3>Fix 2 — Bootstrap dos 12 paths</h3>
+
+<p>
+  INSERT directo em <code>concept_lifecycle</code> com
+  <code>status='unborn'</code>, <code>ramo='operacoes'</code>,
+  <code>initial_status_set=true</code>. ON CONFLICT DO NOTHING — idempotente.
+</p>
+
+<h3>Fix 3 — Re-corrida do <code>concept_git_load.py</code></h3>
+
+<p>
+  Idempotente, com paths agora existentes na tabela. Resultado:
+  <strong>+203 inserts</strong> — exatamente as ocorrências silenciadas.
+</p>
+
+<h3>Fix 4 — Re-pulse</h3>
+
+<p>
+  Com ocorrências em DB, o pulse promoveu os paths novos:
+</p>
+
+<table>
+  <thead><tr><th>Estado</th><th>Paths</th></tr></thead>
+  <tbody>
+    <tr><td class="green">alive</td>
+        <td><code>fix</code> (84) · <code>feat</code> (46) · <code>merge</code> (28) ·
+            <code>docs</code> (21) · <code>test</code> (12) · <code>deploy</code> (8) ·
+            <code>chore</code> (2)</td></tr>
+    <tr><td class="amber">born</td>
+        <td><code>refactor</code> (2)</td></tr>
+    <tr><td>unborn</td>
+        <td><code>wip</code> · <code>ci</code> · <code>hotfix</code> ·
+            <code>revert</code> — sem matches em commit messages</td></tr>
+  </tbody>
+</table>
+
+<h2>5 · Estado final</h2>
+
+<table>
+  <thead>
+    <tr><th>Métrica</th><th class="num">Sonnet reportou</th><th class="num">Real após fix</th><th>Δ</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Ocorrências totais</td><td class="num">78&nbsp;370</td><td class="num">78&nbsp;573</td><td class="green">+203</td></tr>
+    <tr><td>Conceitos em <code>concept_lifecycle</code></td><td class="num">200</td><td class="num">212</td><td class="green">+12 git</td></tr>
+    <tr><td>alive</td><td class="num">182</td><td class="num">189</td><td class="green">+7</td></tr>
+    <tr><td>Privacy leaks</td><td class="num">0</td><td class="num">0</td><td class="green">✓</td></tr>
+    <tr><td>Ramo <code>operacoes/git/*</code> em DB</td><td class="num">0 (oculto)</td><td class="num">203 ocs em 8 alive</td><td class="green">apanhado</td></tr>
+  </tbody>
+</table>
+
+<p><strong>Distribuição por fonte:</strong></p>
+<table>
+  <thead><tr><th>Fonte</th><th class="num">Ocorrências</th></tr></thead>
+  <tbody>
+    <tr><td>chatgpt</td><td class="num">38&nbsp;174</td></tr>
+    <tr><td>claude</td><td class="num">23&nbsp;179</td></tr>
+    <tr><td>filesystem</td><td class="num">7&nbsp;028</td></tr>
+    <tr><td>live_channel</td><td class="num">4&nbsp;007</td></tr>
+    <tr><td>memory</td><td class="num">1&nbsp;786</td></tr>
+    <tr><td>artifacts (novo hoje)</td><td class="num">1&nbsp;727</td></tr>
+    <tr><td>git (novo hoje)</td><td class="num">1&nbsp;296 → 1&nbsp;499 com fix</td></tr>
+    <tr><td>ideas</td><td class="num">1&nbsp;173</td></tr>
+  </tbody>
+</table>
+
+<h2>6 · Lições</h2>
+
+<ol>
+  <li>
+    <strong>Funções defensivas que engolem erros silenciosamente são piores
+    que funções que falham em alto e bom som.</strong> O <code>EXCEPTION WHEN
+    OTHERS</code> tinha boa intenção (manter o batch a correr quando uma
+    linha falha) mas escondeu uma classe inteira de bugs durante uma
+    operação inteira. Lição: <em>nunca colapsar erros em "skipped". Erros
+    e duplicados são categorias diferentes.</em>
+  </li>
+  <li>
+    <strong>Quando executas um plano, lê o que o plano produz no destino —
+    não no que reportaste à saída.</strong> O Sonnet reportou números do
+    <code>stats</code> em memória. Se tivesse contado em DB depois de cada
+    fase, teria visto <code>0 ocs em /operacoes/*</code> e teria parado a
+    cinco minutos do fecho.
+  </li>
+  <li>
+    <strong>Auditoria por par é barata e cara não fazer.</strong> Bastaram
+    cinco queries SQL ao Opus para apanhar isto. Sem a auditoria, a Camada 2
+    teria ficado com 12 patterns inertes e o Paulo teria descoberto na
+    primeira pergunta de busca que falhasse.
+  </li>
+  <li>
+    <strong>Privacidade não é um <em>checkbox</em> — é uma vigilância
+    contínua.</strong> Os 4 leaks "TERESA CONCEIÇÃO" viviam em DB desde
+    03/02/2026 porque a sanitização original tinha um bug case-sensitive.
+    Estiveram disponíveis em qualquer chamada à RPC pública durante 3 meses.
+    Um pendente novo desta sessão é auditar logs Supabase para ver se
+    foram retornados.
+  </li>
+</ol>
+
+<h2>7 · Pendentes que ficaram</h2>
+
+<ul>
+  <li><strong>Vercel webhook quebrado</strong> — os commits
+      <code>d9a6c2d</code> e <code>5f28816</code> não dispararam auto-deploy.
+      Contornado com <code>vercel --prod</code> CLI manual. Root cause não
+      diagnosticado.</li>
+  <li><strong>Auditoria de logs Supabase para privacy</strong> — verificar
+      se a <code>claudius_concept_query()</code> retornou snippets com
+      "TERESA CONCEIÇÃO" durante os 3 meses de exposição.</li>
+  <li><strong>Fase 6 opcional</strong>: tool MCP
+      <code>concept_evidence_for_path</code> para o
+      <code>claudius-mcp-server</code>.</li>
+  <li><strong>Token Instagram</strong> renova a ~24/05/2026.</li>
+</ul>
+
+<h2>8 · Como funciona o método Opus → Sonnet → Opus</h2>
+
+<p>
+  Esta sessão consolidou um padrão de 3 movimentos para tarefas de
+  arquitectura com risco médio:
+</p>
+
+<ol>
+  <li><strong>Opus desenha o plano.</strong> 7 fases, critérios de aceitação
+      por fase, riscos identificados. O plano vive como artefacto em
+      <code>Pal/inbox/</code>.</li>
+  <li><strong>Sonnet executa.</strong> Sessão fresca, lê o plano, escreve o
+      código, corre os scripts. É rápido e bom em seguir instruções
+      operacionais.</li>
+  <li><strong>Opus audita.</strong> Sessão nova, sem confiar na narrativa
+      anterior. Conta tudo no destino. Apanha o que o Sonnet silenciou e
+      arranja antes de fechar a noite.</li>
+</ol>
+
+<p>
+  O custo desta auditoria foi 8 minutos. O custo da Camada 2 ficar com 12
+  patterns mortos durante semanas seria muito maior — e a falha apareceria
+  numa pergunta de utilização real, com contexto perdido.
+</p>
+
+<div class="seal">
+  Paulo Branco | Ferramentas de IA: Claude (Anthropic) — Opus 4.7 (auditor) +
+  Sonnet 4.6 (executor) | GENESIS Protocol | A IA serve o Humano | Porto, 03 Maio 2026
+</div>
+
+</body>
+</html>
