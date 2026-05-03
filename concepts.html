@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CLAUDIUS · Concept Lifecycle</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  body { background:#0a0a0f; color:#e8e4d8; font-family:-apple-system,BlinkMacSystemFont,Inter,system-ui,sans-serif; }
+  .panel { background:rgba(20,21,29,0.7); backdrop-filter:blur(8px); border:1px solid rgba(201,168,76,0.15); border-radius:14px; }
+  .accent { color:#c9a84c; }
+  .muted  { color:#8c8474; }
+  input { background:#14151d; border:1px solid rgba(201,168,76,0.2); color:#e8e4d8; }
+  input:focus { outline:none; border-color:#c9a84c; }
+  .badge { display:inline-block; padding:2px 8px; border-radius:8px; font-size:10px; letter-spacing:0.05em; text-transform:uppercase; font-weight:600; }
+  .b-alive   { background:rgba(45,122,90,0.25);  color:#7ed8a8; }
+  .b-dormant { background:rgba(140,132,116,0.25); color:#bfb59c; }
+  .b-born    { background:rgba(201,168,76,0.25); color:#e0c878; }
+  .b-unborn  { background:rgba(42,90,143,0.25);  color:#8cb4dc; }
+  .b-dead    { background:rgba(139,41,66,0.30);  color:#e8889c; }
+  .b-mutated { background:rgba(120,80,200,0.25); color:#c4a8f0; }
+  th { font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:#8c8474; font-weight:500; }
+  tr:hover td { background:rgba(201,168,76,0.04); }
+  .kpi-val { font-size:1.5rem; font-weight:300; }
+  .kpi-lbl { font-size:0.7rem; color:#8c8474; text-transform:uppercase; letter-spacing:0.06em; margin-top:0.25rem; }
+</style>
+</head>
+<body class="min-h-screen">
+
+<header class="px-6 pt-8 pb-4 max-w-7xl mx-auto">
+  <div class="flex items-baseline justify-between flex-wrap gap-4">
+    <div>
+      <h1 class="text-3xl font-light tracking-wide">CLAUDIUS · <span class="accent">Concept Lifecycle</span></h1>
+      <p class="muted text-sm mt-1">Camada 2 da memória composta · 200 conceitos · 6 fontes</p>
+    </div>
+    <div class="text-right text-xs muted">
+      <div>Último refresh: <span id="last-refresh">—</span></div>
+      <div>Último pulse: <span id="last-pulse" class="accent">—</span></div>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-7xl mx-auto px-6 pb-12 space-y-6">
+
+  <section id="kpis" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3"></section>
+
+  <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="panel p-5">
+      <h2 class="text-sm font-medium tracking-wider muted mb-4">DISTRIBUIÇÃO DE ESTADOS</h2>
+      <div style="height:260px"><canvas id="donut"></canvas></div>
+    </div>
+    <div class="panel p-5">
+      <h2 class="text-sm font-medium tracking-wider muted mb-4">TOP 10 CONCEITOS POR OCORRÊNCIAS</h2>
+      <div style="height:260px"><canvas id="top10"></canvas></div>
+    </div>
+  </section>
+
+  <section class="panel p-5">
+    <h2 class="text-sm font-medium tracking-wider muted mb-4">TIMELINE MENSAL · TODAS AS FONTES</h2>
+    <div style="height:280px"><canvas id="timeline"></canvas></div>
+  </section>
+
+  <section class="panel p-5">
+    <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+      <h2 class="text-sm font-medium tracking-wider muted">PESQUISA WILDCARD</h2>
+      <div class="text-xs muted" id="example-buttons"></div>
+    </div>
+    <input id="search" type="text" class="w-full px-4 py-3 rounded-lg text-sm font-mono"
+           placeholder="/RESSONANCIA/sistema/* · /RESSONANCIA/projecto/wardrobe% · ou * para tudo"
+           value="/RESSONANCIA/sistema/*">
+    <div id="search-status" class="text-xs muted mt-2">—</div>
+    <div class="overflow-x-auto mt-3">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-left border-b border-white/5">
+            <th class="py-2 pr-4">Path</th>
+            <th class="py-2 pr-4">Estado</th>
+            <th class="py-2 pr-4 text-right">Ocs</th>
+            <th class="py-2 pr-4 text-right">30d</th>
+            <th class="py-2 pr-4">Pico</th>
+            <th class="py-2 pr-4">Última actividade</th>
+          </tr>
+        </thead>
+        <tbody id="search-body"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer class="text-xs muted text-center pt-4 border-t border-white/5">
+    Paulo Branco · GENESIS Protocol · CLAUDIUS · A IA serve o Humano
+  </footer>
+</main>
+
+<script>
+const SUPA_URL = "https://btkdpjlltekssobfzdhu.supabase.co";
+const SUPA_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0a2RwamxsdGVrc3NvYmZ6ZGh1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NzA4ODgsImV4cCI6MjA4NjI0Njg4OH0.6IwYG23OD9Rh2fpVMlGiaZy77d3CKczpudIzjZ9dEZM";
+const HEADERS = { apikey: SUPA_ANON, Authorization: "Bearer " + SUPA_ANON, "Content-Type": "application/json" };
+
+const STATUS_COLORS = {
+  alive:   "#2d7a5a",
+  dormant: "#8c8474",
+  born:    "#c9a84c",
+  unborn:  "#2a5a8f",
+  dead:    "#8b2942",
+  mutated: "#7850c8",
+};
+
+async function rpc(name, body = {}) {
+  const r = await fetch(SUPA_URL + "/rest/v1/rpc/" + name, {
+    method: "POST", headers: HEADERS, body: JSON.stringify(body)
+  });
+  if (!r.ok) throw new Error(name + " " + r.status + ": " + await r.text());
+  return r.json();
+}
+
+function fmtDate(ts) {
+  if (!ts) return "—";
+  return new Date(ts).toISOString().slice(0, 10);
+}
+
+function el(tag, attrs = {}, ...children) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "class") e.className = v;
+    else if (k === "dataset") Object.assign(e.dataset, v);
+    else e.setAttribute(k, v);
+  }
+  for (const c of children) {
+    if (c == null) continue;
+    e.appendChild(typeof c === "string" ? document.createTextNode(c) : c);
+  }
+  return e;
+}
+
+let donutChart, top10Chart, timelineChart;
+
+function renderKPIs(data) {
+  const cards = [
+    ["Total",   data.total ?? 0,             "accent"],
+    ["Alive",   data.counts.alive ?? 0,      "text-emerald-300"],
+    ["Dormant", data.counts.dormant ?? 0,    "text-stone-400"],
+    ["Born",    data.counts.born ?? 0,       "accent"],
+    ["Unborn",  data.counts.unborn ?? 0,     "text-blue-300"],
+    ["Dead",    data.counts.dead ?? 0,       "text-rose-300"],
+  ];
+  const container = document.getElementById("kpis");
+  container.replaceChildren(
+    ...cards.map(([lbl, val, cls]) =>
+      el("div", { class: "panel p-4" },
+        el("div", { class: "kpi-val " + cls }, String(val)),
+        el("div", { class: "kpi-lbl" }, lbl)
+      )
+    )
+  );
+}
+
+async function loadSummary() {
+  const data = await rpc("claudius_concept_status_summary");
+  renderKPIs(data);
+
+  document.getElementById("last-pulse").textContent =
+    data.last_pulse ? new Date(data.last_pulse).toLocaleString("pt-PT") : "—";
+
+  const labels = Object.keys(data.counts);
+  const values = Object.values(data.counts);
+  if (donutChart) donutChart.destroy();
+  donutChart = new Chart(document.getElementById("donut"), {
+    type: "doughnut",
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: labels.map(s => STATUS_COLORS[s] ?? "#8c8474"),
+        borderColor: "#0a0a0f", borderWidth: 2,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: "right", labels: { color: "#bfb59c", font: { size: 11 } } } },
+      cutout: "65%",
+    }
+  });
+
+  if (top10Chart) top10Chart.destroy();
+  top10Chart = new Chart(document.getElementById("top10"), {
+    type: "bar",
+    data: {
+      labels: data.top10.map(x => x.display_name),
+      datasets: [{
+        data: data.top10.map(x => x.occurrences_total),
+        backgroundColor: data.top10.map(x => STATUS_COLORS[x.status] ?? "#c9a84c"),
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      indexAxis: "y", responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: "#8c8474", font: { size: 10 } }, grid: { color: "rgba(255,255,255,0.04)" } },
+        y: { ticks: { color: "#bfb59c", font: { size: 11 } }, grid: { display: false } },
+      }
+    }
+  });
+}
+
+async function loadTimeline() {
+  const data = await rpc("claudius_concept_global_timeline");
+  if (timelineChart) timelineChart.destroy();
+  timelineChart = new Chart(document.getElementById("timeline"), {
+    type: "line",
+    data: {
+      labels: data.map(x => x.month),
+      datasets: [{
+        label: "Ocorrências/mês",
+        data: data.map(x => x.count),
+        borderColor: "#c9a84c",
+        backgroundColor: "rgba(201,168,76,0.15)",
+        fill: true, tension: 0.3, pointRadius: 3, pointHoverRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: "#8c8474", font: { size: 10 } }, grid: { color: "rgba(255,255,255,0.03)" } },
+        y: { ticks: { color: "#8c8474", font: { size: 10 } }, grid: { color: "rgba(255,255,255,0.05)" } },
+      }
+    }
+  });
+}
+
+let searchTimer = null;
+async function search(q) {
+  const status = document.getElementById("search-status");
+  const body   = document.getElementById("search-body");
+  status.textContent = "A pesquisar…";
+  try {
+    const rows = await rpc("claudius_concept_query",
+      { p_concept_path: q || "*", p_mode: "lifecycle" });
+    const arr = Array.isArray(rows) ? rows : [];
+    body.replaceChildren(
+      ...arr.slice(0, 50).map(r => el("tr", { class: "border-b border-white/5" },
+        el("td", { class: "py-2 pr-4 font-mono text-xs" }, r.concept_path.replace("/RESSONANCIA/", "")),
+        el("td", { class: "py-2 pr-4" },
+          el("span", { class: "badge b-" + r.status }, r.status)
+        ),
+        el("td", { class: "py-2 pr-4 text-right tabular-nums" }, String(r.occurrences_total)),
+        el("td", { class: "py-2 pr-4 text-right tabular-nums" }, String(r.occurrences_30d ?? 0)),
+        el("td", { class: "py-2 pr-4 text-xs muted" },
+          r.peak_count ? (r.peak_count + " em " + fmtDate(r.peak_date)) : "—"),
+        el("td", { class: "py-2 pr-4 text-xs muted" }, fmtDate(r.last_seen_at))
+      ))
+    );
+    status.textContent = arr.length + " conceitos · mostrando primeiros " + Math.min(50, arr.length);
+  } catch (e) {
+    status.textContent = "Erro: " + e.message;
+    body.replaceChildren();
+  }
+}
+
+function buildExampleButtons() {
+  const examples = [
+    ["*", "*"],
+    ["/RESSONANCIA/sistema/*", "/sistema/*"],
+    ["/RESSONANCIA/projecto/wardrobe%", "wardrobe%"],
+    ["/RESSONANCIA/pessoas/*", "/pessoas/*"],
+  ];
+  const wrap = document.getElementById("example-buttons");
+  wrap.appendChild(document.createTextNode("Exemplos: "));
+  examples.forEach(([q, label], i) => {
+    const b = el("button", { class: "accent hover:underline mx-1" }, label);
+    b.addEventListener("click", () => {
+      document.getElementById("search").value = q;
+      search(q);
+    });
+    wrap.appendChild(b);
+    if (i < examples.length - 1) wrap.appendChild(document.createTextNode(" · "));
+  });
+}
+
+document.getElementById("search").addEventListener("input", e => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => search(e.target.value), 300);
+});
+
+buildExampleButtons();
+
+async function refreshAll() {
+  document.getElementById("last-refresh").textContent =
+    new Date().toLocaleTimeString("pt-PT");
+  await Promise.all([
+    loadSummary(),
+    loadTimeline(),
+    search(document.getElementById("search").value),
+  ]);
+}
+
+refreshAll();
+setInterval(refreshAll, 60_000);
+</script>
+</body>
+</html>
