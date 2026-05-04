@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ALATUS — Agente de Processos</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f5f0e0;
+    color: #1a2a1a;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    background: #2d7a5a;
+    color: #f5f0e0;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  }
+  header .logo { font-size: 22px; }
+  header .title { font-size: 16px; font-weight: 700; letter-spacing: 0.3px; }
+  header .sub { font-size: 11px; opacity: 0.8; margin-top: 1px; }
+
+  #chat-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .msg {
+    max-width: 85%;
+    padding: 10px 14px;
+    border-radius: 14px;
+    font-size: 14px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .msg.user {
+    background: #2a5a8f;
+    color: #f5f0e0;
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+  }
+  .msg.bot {
+    background: #fff;
+    color: #1a2a1a;
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  .msg.loading {
+    background: #e8e4d6;
+    color: #666;
+    align-self: flex-start;
+    font-style: italic;
+    font-size: 13px;
+  }
+
+  .welcome {
+    text-align: center;
+    color: #5a7a5a;
+    font-size: 13px;
+    padding: 20px 10px;
+    line-height: 1.6;
+  }
+  .welcome .icon { font-size: 36px; margin-bottom: 8px; }
+  .welcome strong { color: #2d7a5a; }
+
+  .suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    margin-top: 12px;
+  }
+  .suggestion-btn {
+    background: #fff;
+    border: 1px solid #2d7a5a;
+    color: #2d7a5a;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .suggestion-btn:hover { background: #e8f5ee; }
+
+  footer {
+    background: #fff;
+    border-top: 1px solid #ddd8c8;
+    padding: 10px 12px;
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  #input {
+    flex: 1;
+    border: 1.5px solid #c8c0a8;
+    border-radius: 22px;
+    padding: 10px 16px;
+    font-size: 14px;
+    background: #f5f0e0;
+    outline: none;
+    resize: none;
+    max-height: 120px;
+    font-family: inherit;
+    line-height: 1.4;
+  }
+  #input:focus { border-color: #2d7a5a; }
+  #send-btn {
+    background: #2d7a5a;
+    color: #f5f0e0;
+    border: none;
+    border-radius: 50%;
+    width: 42px;
+    height: 42px;
+    font-size: 18px;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+    align-self: flex-end;
+  }
+  #send-btn:hover { background: #245e45; }
+  #send-btn:disabled { background: #a0b8a8; cursor: not-allowed; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🏠</div>
+  <div>
+    <div class="title">ALATUS — Agente de Processos</div>
+    <div class="sub">ERA Porto Baixa · Processadoras: Anabela &amp; Joana</div>
+  </div>
+</header>
+
+<div id="chat-area">
+  <div class="welcome" id="welcome">
+    <div class="icon">🤖</div>
+    <p>Olá! Sou o assistente ALATUS.<br>
+    Podes perguntar sobre os processos imobiliários de 2026,<br>
+    faturas, comissões ou estado dos processos.</p>
+    <div class="suggestions">
+      <button class="suggestion-btn" onclick="sendSuggestion(this)">Quantos processos existem?</button>
+      <button class="suggestion-btn" onclick="sendSuggestion(this)">Quais estão em FATURADO?</button>
+      <button class="suggestion-btn" onclick="sendSuggestion(this)">Total de comissões CA</button>
+      <button class="suggestion-btn" onclick="sendSuggestion(this)">Processos do André</button>
+      <button class="suggestion-btn" onclick="sendSuggestion(this)">Quais ainda não foram recebidos?</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <textarea id="input" placeholder="Pergunta sobre os processos..." rows="1"
+    onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+  <button id="send-btn" onclick="send()" title="Enviar">&#10148;</button>
+</footer>
+
+<script>
+const WEBHOOK = 'https://n8n-production-056d.up.railway.app/webhook/alatus-chat';
+
+let sessionId = localStorage.getItem('alatus-session-id');
+if (!sessionId) {
+  sessionId = 'alatus-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+  localStorage.setItem('alatus-session-id', sessionId);
+}
+
+const chatArea = document.getElementById('chat-area');
+const input = document.getElementById('input');
+const sendBtn = document.getElementById('send-btn');
+
+function addMsg(text, role) {
+  const welcome = document.getElementById('welcome');
+  if (welcome) welcome.remove();
+  const div = document.createElement('div');
+  div.className = 'msg ' + role;
+  div.textContent = text;
+  chatArea.appendChild(div);
+  chatArea.scrollTop = chatArea.scrollHeight;
+  return div;
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    send();
+  }
+}
+
+function sendSuggestion(btn) {
+  input.value = btn.textContent;
+  send();
+}
+
+async function send() {
+  const text = input.value.trim();
+  if (!text) return;
+
+  input.value = '';
+  input.style.height = 'auto';
+  sendBtn.disabled = true;
+
+  addMsg(text, 'user');
+  const loadingMsg = addMsg('A consultar os processos...', 'loading');
+
+  try {
+    const res = await fetch(WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chatInput: text, sessionId })
+    });
+
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    loadingMsg.remove();
+    addMsg(data.output || JSON.stringify(data), 'bot');
+  } catch (err) {
+    loadingMsg.remove();
+    addMsg('Erro ao contactar o agente: ' + err.message, 'loading');
+  } finally {
+    sendBtn.disabled = false;
+    input.focus();
+  }
+}
+</script>
+
+</body>
+</html>
