@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ALATUS — Agente de Processos</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -30,6 +31,99 @@
   header .title { font-size: 16px; font-weight: 700; letter-spacing: 0.3px; }
   header .sub { font-size: 11px; opacity: 0.8; margin-top: 1px; }
 
+  /* ── Dashboard ── */
+  #dash-toggle-bar {
+    background: #e8f5ee;
+    border-bottom: 1px solid #c5e0d0;
+    padding: 5px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    flex-shrink: 0;
+    user-select: none;
+  }
+  #dash-toggle-bar:hover { background: #d8eedf; }
+  .dash-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #2d7a5a;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  #dash-updated { font-size: 10px; color: #7aaa8a; font-weight: 400; }
+  #dash-arrow { font-size: 10px; color: #2d7a5a; transition: transform 0.3s; }
+
+  #dashboard {
+    flex-shrink: 0;
+    background: #fff;
+    border-bottom: 1px solid #ddd8c8;
+    overflow: hidden;
+    transition: max-height 0.35s ease;
+    max-height: 320px;
+  }
+  #dashboard.collapsed { max-height: 0; }
+
+  #dash-inner {
+    padding: 10px 14px 12px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  .dash-card {
+    background: #f9f7f2;
+    border: 1px solid #e0dcd0;
+    border-radius: 8px;
+    padding: 8px 10px;
+  }
+  .dash-card.full { grid-column: 1 / -1; }
+  .dash-card h3 {
+    font-size: 10px;
+    font-weight: 700;
+    color: #5a7a5a;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .dash-card canvas { width: 100% !important; }
+
+  .tx-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+  }
+  .tx-table th {
+    background: #2d7a5a;
+    color: #f5f0e0;
+    padding: 4px 8px;
+    text-align: center;
+    font-weight: 600;
+  }
+  .tx-table th:first-child { text-align: left; }
+  .tx-table td {
+    padding: 3px 8px;
+    text-align: center;
+    border-bottom: 1px solid #e8e4d8;
+    color: #2a3a2a;
+  }
+  .tx-table td:first-child { text-align: left; font-weight: 600; }
+  .tx-table tr:last-child td { background: #f0f7f3; font-weight: 700; border-bottom: none; }
+  .tx-table tr:hover td { background: #eef8f2; }
+
+  .dash-loading {
+    grid-column: 1 / -1;
+    font-size: 12px;
+    color: #9ab09a;
+    font-style: italic;
+    padding: 16px 0;
+    text-align: center;
+  }
+
+  /* ── Chat ── */
   #chat-area {
     flex: 1;
     overflow-y: auto;
@@ -150,6 +244,42 @@
   </div>
 </header>
 
+<div id="dash-toggle-bar" onclick="toggleDashboard()" role="button" aria-expanded="true" aria-controls="dashboard">
+  <div class="dash-label">📊 Dashboard · <span id="dash-updated">a carregar...</span></div>
+  <span id="dash-arrow">▲</span>
+</div>
+
+<div id="dashboard" role="region" aria-label="Dashboard de métricas">
+  <div id="dash-inner">
+    <p class="dash-loading" id="dash-loading">A carregar dados...</p>
+
+    <div class="dash-card" id="card-consultores" hidden>
+      <h3>Faturado &amp; Pipeline por Consultor (€)</h3>
+      <canvas id="chartConsultores" height="110" role="img" aria-label="Gráfico de faturação e pipeline por consultor"></canvas>
+    </div>
+
+    <div class="dash-card" id="card-mensal" hidden>
+      <h3>Faturação Mensal (€)</h3>
+      <canvas id="chartMensal" height="110" role="img" aria-label="Gráfico de faturação mensal"></canvas>
+    </div>
+
+    <div class="dash-card full" id="card-tx" hidden>
+      <h3>Transações por Consultor</h3>
+      <table class="tx-table" id="txTable">
+        <thead>
+          <tr>
+            <th>Consultor</th>
+            <th style="color:#c9f0d8">CA — Angariações</th>
+            <th style="color:#b8d4f0">CV — Vendas</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody id="txBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 <div id="chat-area">
   <div class="welcome" id="welcome">
     <div class="icon">🤖</div>
@@ -173,7 +303,12 @@
 </footer>
 
 <script>
-const WEBHOOK = 'https://n8n-production-056d.up.railway.app/webhook/alatus-chat';
+const WEBHOOK  = 'https://n8n-production-056d.up.railway.app/webhook/alatus-chat';
+const DATA_URL = 'https://n8n-production-056d.up.railway.app/webhook/alatus-data';
+
+const GREEN = '#2d7a5a';
+const GOLD  = '#c9a84c';
+const BLUE  = '#2a5a8f';
 
 let sessionId = localStorage.getItem('alatus-session-id');
 if (!sessionId) {
@@ -181,10 +316,173 @@ if (!sessionId) {
   localStorage.setItem('alatus-session-id', sessionId);
 }
 
-const chatArea = document.getElementById('chat-area');
-const input = document.getElementById('input');
-const sendBtn = document.getElementById('send-btn');
+const chatArea  = document.getElementById('chat-area');
+const input     = document.getElementById('input');
+const sendBtn   = document.getElementById('send-btn');
+const dashboard = document.getElementById('dashboard');
+const dashArrow = document.getElementById('dash-arrow');
+const toggleBar = document.getElementById('dash-toggle-bar');
 
+let dashOpen = true;
+let chartCons = null;
+let chartMes  = null;
+
+function toggleDashboard() {
+  dashOpen = !dashOpen;
+  dashboard.classList.toggle('collapsed', !dashOpen);
+  dashArrow.style.transform = dashOpen ? '' : 'rotate(180deg)';
+  toggleBar.setAttribute('aria-expanded', String(dashOpen));
+}
+
+function fmtEur(v) {
+  if (v >= 1000) return '€' + (v / 1000).toFixed(1).replace('.', ',') + 'k';
+  return '€' + Math.round(v).toLocaleString('pt-PT');
+}
+
+function buildTxRow(name, ca, cv) {
+  const tr = document.createElement('tr');
+  const tdName = document.createElement('td');
+  tdName.textContent = name;
+  const tdCa = document.createElement('td');
+  tdCa.textContent = ca;
+  tdCa.style.color = '#2d7a5a';
+  tdCa.style.fontWeight = '700';
+  const tdCv = document.createElement('td');
+  tdCv.textContent = cv;
+  tdCv.style.color = '#2a5a8f';
+  tdCv.style.fontWeight = '700';
+  const tdTx = document.createElement('td');
+  tdTx.textContent = ca + cv;
+  tdTx.style.color = '#c9a84c';
+  tdTx.style.fontWeight = '700';
+  tr.appendChild(tdName);
+  tr.appendChild(tdCa);
+  tr.appendChild(tdCv);
+  tr.appendChild(tdTx);
+  return tr;
+}
+
+function renderCharts(data) {
+  const consultores = data.consultores || [];
+  const porMesFat   = data.porMesFat   || [];
+
+  if (data.updatedAt) {
+    const d = new Date(data.updatedAt);
+    document.getElementById('dash-updated').textContent =
+      'actualizado às ' + d.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  // Chart 1 — Faturado + Pipeline per consultant (horizontal stacked bar)
+  const ctx1 = document.getElementById('chartConsultores').getContext('2d');
+  if (chartCons) chartCons.destroy();
+  chartCons = new Chart(ctx1, {
+    type: 'bar',
+    data: {
+      labels: consultores.map(function(c) { return c.name; }),
+      datasets: [
+        {
+          label: 'Faturado',
+          data: consultores.map(function(c) { return c.faturado || 0; }),
+          backgroundColor: GREEN,
+          borderRadius: 3
+        },
+        {
+          label: 'Pipeline',
+          data: consultores.map(function(c) { return c.porFaturar || 0; }),
+          backgroundColor: GOLD,
+          borderRadius: 3
+        }
+      ]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 9 }, boxWidth: 10, padding: 6 } },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) { return ' ' + ctx.dataset.label + ': ' + fmtEur(ctx.parsed.x); }
+          }
+        }
+      },
+      scales: {
+        x: {
+          stacked: true,
+          ticks: { font: { size: 9 }, callback: function(v) { return fmtEur(v); } },
+          grid: { color: '#e8e4d8' }
+        },
+        y: { stacked: true, ticks: { font: { size: 10 } }, grid: { display: false } }
+      }
+    }
+  });
+  document.getElementById('card-consultores').hidden = false;
+
+  // Chart 2 — Monthly faturação (vertical bar)
+  const ctx2 = document.getElementById('chartMensal').getContext('2d');
+  if (chartMes) chartMes.destroy();
+  chartMes = new Chart(ctx2, {
+    type: 'bar',
+    data: {
+      labels: porMesFat.map(function(m) { return m.label; }),
+      datasets: [{
+        label: 'Faturação',
+        data: porMesFat.map(function(m) { return m.fat_valor || 0; }),
+        backgroundColor: BLUE,
+        borderRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) { return ' ' + fmtEur(ctx.parsed.y); }
+          }
+        }
+      },
+      scales: {
+        y: {
+          ticks: { font: { size: 9 }, callback: function(v) { return fmtEur(v); } },
+          grid: { color: '#e8e4d8' }
+        },
+        x: { ticks: { font: { size: 10 } }, grid: { display: false } }
+      }
+    }
+  });
+  document.getElementById('card-mensal').hidden = false;
+
+  // Transactions table
+  const tbody = document.getElementById('txBody');
+  while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
+
+  var totalCA = 0, totalCV = 0;
+  for (var i = 0; i < consultores.length; i++) {
+    var c = consultores[i];
+    var ca = c.ca || 0;
+    var cv = c.cv || 0;
+    totalCA += ca;
+    totalCV += cv;
+    tbody.appendChild(buildTxRow(c.name, ca, cv));
+  }
+  tbody.appendChild(buildTxRow('Total', totalCA, totalCV));
+  document.getElementById('card-tx').hidden = false;
+}
+
+async function loadDashboard() {
+  try {
+    const res = await fetch(DATA_URL);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    document.getElementById('dash-loading').style.display = 'none';
+    renderCharts(data);
+  } catch (err) {
+    const el = document.getElementById('dash-loading');
+    el.textContent = 'Erro ao carregar dados: ' + err.message;
+  }
+}
+
+// ── Chat ─────────────────────────────────────────────────────────
 function addMsg(text, role) {
   const welcome = document.getElementById('welcome');
   if (welcome) welcome.remove();
@@ -243,6 +541,8 @@ async function send() {
     input.focus();
   }
 }
+
+loadDashboard();
 </script>
 
 </body>
