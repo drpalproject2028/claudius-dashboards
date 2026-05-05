@@ -259,8 +259,8 @@
     </div>
 
     <div class="dash-card" id="card-mensal" hidden>
-      <h3>Faturação Mensal (€)</h3>
-      <canvas id="chartMensal" height="110" role="img" aria-label="Gráfico de faturação mensal"></canvas>
+      <h3>Produção &amp; Faturação por Mês (€)</h3>
+      <canvas id="chartMensal" height="110" role="img" aria-label="Gráfico de produção e faturação mensal"></canvas>
     </div>
 
     <div class="dash-card full" id="card-tx" hidden>
@@ -365,6 +365,7 @@ function buildTxRow(name, ca, cv) {
 function renderCharts(data) {
   const consultores = data.consultores || [];
   const porMesFat   = data.porMesFat   || [];
+  const porMesProd  = data.porMesProd  || [];
 
   if (data.updatedAt) {
     const d = new Date(data.updatedAt);
@@ -417,27 +418,35 @@ function renderCharts(data) {
   });
   document.getElementById('card-consultores').hidden = false;
 
-  // Chart 2 — Monthly faturação (vertical bar)
+  // Chart 2 — Monthly produção + faturação (grouped vertical bar)
   const ctx2 = document.getElementById('chartMensal').getContext('2d');
   if (chartMes) chartMes.destroy();
   chartMes = new Chart(ctx2, {
     type: 'bar',
     data: {
       labels: porMesFat.map(function(m) { return m.label; }),
-      datasets: [{
-        label: 'Faturação',
-        data: porMesFat.map(function(m) { return m.fat_valor || 0; }),
-        backgroundColor: BLUE,
-        borderRadius: 4
-      }]
+      datasets: [
+        {
+          label: 'Produção',
+          data: porMesProd.map(function(m) { return m.producao || 0; }),
+          backgroundColor: GREEN,
+          borderRadius: 3
+        },
+        {
+          label: 'Faturação',
+          data: porMesFat.map(function(m) { return m.fat_valor || 0; }),
+          backgroundColor: BLUE,
+          borderRadius: 3
+        }
+      ]
     },
     options: {
       responsive: true,
       plugins: {
-        legend: { display: false },
+        legend: { position: 'bottom', labels: { font: { size: 9 }, boxWidth: 10, padding: 6 } },
         tooltip: {
           callbacks: {
-            label: function(ctx) { return ' ' + fmtEur(ctx.parsed.y); }
+            label: function(ctx) { return ' ' + ctx.dataset.label + ': ' + fmtEur(ctx.parsed.y); }
           }
         }
       },
