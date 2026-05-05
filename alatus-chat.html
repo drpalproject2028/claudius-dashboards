@@ -27,7 +27,6 @@
     flex-shrink: 0;
     box-shadow: 0 2px 6px rgba(0,0,0,0.2);
   }
-  header .logo { font-size: 22px; }
   header .title { font-size: 16px; font-weight: 700; letter-spacing: 0.3px; }
   header .sub { font-size: 11px; opacity: 0.8; margin-top: 1px; }
 
@@ -75,7 +74,8 @@
   }
 
   @media (min-width: 600px) {
-    #dash-inner { grid-template-columns: 1fr 1fr; }
+    #dashboard { max-height: 400px; }
+    #dash-inner { grid-template-columns: 1fr 1fr; max-height: 380px; }
   }
 
   .chart-wrap { position: relative; height: 120px; }
@@ -176,7 +176,6 @@
     padding: 20px 10px;
     line-height: 1.6;
   }
-  .welcome .icon { font-size: 36px; margin-bottom: 8px; }
   .welcome strong { color: #2d7a5a; }
 
   .suggestions {
@@ -243,7 +242,7 @@
 <body>
 
 <header>
-  <div class="logo">🏠</div>
+  <img src="alatus-logo.png" alt="ALATUS" style="width:42px;height:42px;border-radius:8px;flex-shrink:0">
   <div>
     <div class="title">PACT — Agente de Processos</div>
     <div class="sub">ERA Porto Baixa / Centro · Equipa Alatus · powered by PALCORE</div>
@@ -269,8 +268,8 @@
     </div>
 
     <div class="dash-card" id="card-mensal" hidden>
-      <h3>Faturação Mensal (€)</h3>
-      <div class="chart-wrap"><canvas id="chartMensal" role="img" aria-label="Gráfico de faturação mensal"></canvas></div>
+      <h3>Faturação e Produção Mensal (€)</h3>
+      <div class="chart-wrap" id="wrapMensal" style="height:240px"><canvas id="chartMensal" role="img" aria-label="Gráfico de faturação e produção mensal"></canvas></div>
     </div>
 
     <div class="dash-card full" id="card-tx" hidden>
@@ -292,8 +291,8 @@
 
 <div id="chat-area">
   <div class="welcome" id="welcome">
-    <div class="icon">🤖</div>
-    <p>Olá! Sou o assistente ALATUS.<br>
+    <img src="alatus-logo.png" alt="ALATUS" style="width:56px;height:56px;border-radius:12px;margin-bottom:10px">
+    <p>Sou o Assistente PACT para a equipa ALATUS.<br>
     Podes perguntar sobre os processos imobiliários de 2026,<br>
     faturas, comissões ou estado dos processos.</p>
     <div class="suggestions">
@@ -459,7 +458,7 @@ function renderCharts(data) {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { position: 'bottom', labels: { font: { size: 9 }, boxWidth: 10, padding: 6 } },
+        legend: { display: true, position: 'bottom', labels: { font: { size: 10 }, boxWidth: 12, padding: 10 } },
         tooltip: {
           callbacks: {
             label: function(ctx) { return ' ' + ctx.dataset.label + ': ' + fmtEur(ctx.parsed.y); }
@@ -468,7 +467,7 @@ function renderCharts(data) {
       },
       scales: {
         y: {
-          ticks: { font: { size: 9 }, callback: function(v) { return fmtEur(v); } },
+          ticks: { font: { size: 9 }, stepSize: 5000, callback: function(v) { return fmtEur(v); } },
           grid: { color: '#e8e4d8' }
         },
         x: { ticks: { font: { size: 10 } }, grid: { display: false } }
