@@ -382,7 +382,10 @@ function renderCharts(data) {
       'actualizado às ' + d.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
   }
 
-  // Chart 1 — Faturado + Pipeline per consultant (horizontal stacked bar)
+  // Chart 1 — height scales with number of consultores so all bars are visible
+  const wrapCons = document.getElementById('chartConsultores').parentElement;
+  wrapCons.style.height = Math.max(160, consultores.length * 34 + 50) + 'px';
+
   const ctx1 = document.getElementById('chartConsultores').getContext('2d');
   if (chartCons) chartCons.destroy();
   chartCons = new Chart(ctx1, {
