@@ -60,18 +60,23 @@
     background: #fff;
     border-bottom: 1px solid #ddd8c8;
     overflow: hidden;
-    transition: max-height 0.35s ease;
-    max-height: 320px;
+    transition: max-height 0.4s ease;
+    max-height: 600px;
   }
   #dashboard.collapsed { max-height: 0; }
 
   #dash-inner {
     padding: 10px 14px 12px;
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 10px;
-    max-height: 300px;
+    max-height: 580px;
     overflow-y: auto;
+  }
+
+  @media (min-width: 600px) {
+    #dashboard { max-height: 320px; }
+    #dash-inner { grid-template-columns: 1fr 1fr; max-height: 300px; }
   }
 
   .dash-card {
@@ -259,12 +264,12 @@
 
     <div class="dash-card" id="card-consultores" hidden>
       <h3>Faturado &amp; Pipeline por Consultor (€)</h3>
-      <canvas id="chartConsultores" height="110" role="img" aria-label="Gráfico de faturação e pipeline por consultor"></canvas>
+      <canvas id="chartConsultores" height="160" role="img" aria-label="Gráfico de faturação e pipeline por consultor"></canvas>
     </div>
 
     <div class="dash-card" id="card-mensal" hidden>
       <h3>Produção &amp; Faturação por Mês (€)</h3>
-      <canvas id="chartMensal" height="110" role="img" aria-label="Gráfico de produção e faturação mensal"></canvas>
+      <canvas id="chartMensal" height="160" role="img" aria-label="Gráfico de produção e faturação mensal"></canvas>
     </div>
 
     <div class="dash-card full" id="card-tx" hidden>
@@ -402,6 +407,7 @@ function renderCharts(data) {
     options: {
       indexAxis: 'y',
       responsive: true,
+      maintainAspectRatio: false,
       plugins: {
         legend: { position: 'bottom', labels: { font: { size: 9 }, boxWidth: 10, padding: 6 } },
         tooltip: {
@@ -446,6 +452,7 @@ function renderCharts(data) {
     },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       plugins: {
         legend: { position: 'bottom', labels: { font: { size: 9 }, boxWidth: 10, padding: 6 } },
         tooltip: {
