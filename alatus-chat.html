@@ -61,7 +61,7 @@
     border-bottom: 1px solid #ddd8c8;
     overflow: hidden;
     transition: max-height 0.4s ease;
-    max-height: 600px;
+    max-height: 320px;
   }
   #dashboard.collapsed { max-height: 0; }
 
@@ -70,14 +70,15 @@
     display: grid;
     grid-template-columns: 1fr;
     gap: 10px;
-    max-height: 580px;
+    max-height: 300px;
     overflow-y: auto;
   }
 
   @media (min-width: 600px) {
-    #dashboard { max-height: 320px; }
-    #dash-inner { grid-template-columns: 1fr 1fr; max-height: 300px; }
+    #dash-inner { grid-template-columns: 1fr 1fr; }
   }
+
+  .chart-wrap { position: relative; height: 120px; }
 
   .dash-card {
     background: #f9f7f2;
@@ -264,12 +265,12 @@
 
     <div class="dash-card" id="card-consultores" hidden>
       <h3>Faturado &amp; Pipeline por Consultor (€)</h3>
-      <canvas id="chartConsultores" height="160" role="img" aria-label="Gráfico de faturação e pipeline por consultor"></canvas>
+      <div class="chart-wrap"><canvas id="chartConsultores" role="img" aria-label="Gráfico de faturação e pipeline por consultor"></canvas></div>
     </div>
 
     <div class="dash-card" id="card-mensal" hidden>
-      <h3>Produção &amp; Faturação por Mês (€)</h3>
-      <canvas id="chartMensal" height="160" role="img" aria-label="Gráfico de produção e faturação mensal"></canvas>
+      <h3>Faturação Mensal (€)</h3>
+      <div class="chart-wrap"><canvas id="chartMensal" role="img" aria-label="Gráfico de faturação mensal"></canvas></div>
     </div>
 
     <div class="dash-card full" id="card-tx" hidden>
@@ -292,7 +293,7 @@
 <div id="chat-area">
   <div class="welcome" id="welcome">
     <div class="icon">🤖</div>
-    <p>Olá! Sou o assistente PACT.<br>
+    <p>Olá! Sou o assistente ALATUS.<br>
     Podes perguntar sobre os processos imobiliários de 2026,<br>
     faturas, comissões ou estado dos processos.</p>
     <div class="suggestions">
@@ -374,7 +375,6 @@ function buildTxRow(name, ca, cv) {
 function renderCharts(data) {
   const consultores = data.consultores || [];
   const porMesFat   = data.porMesFat   || [];
-  const porMesProd  = data.porMesProd  || [];
 
   if (data.updatedAt) {
     const d = new Date(data.updatedAt);
@@ -428,13 +428,15 @@ function renderCharts(data) {
   });
   document.getElementById('card-consultores').hidden = false;
 
-  // Chart 2 — Monthly produção + faturação (grouped vertical bar)
+  // Chart 2 — Monthly faturação + produção (grouped vertical bar)
+  const porMesProd = data.porMesProd || [];
+  const labels2 = porMesFat.map(function(m) { return m.label; });
   const ctx2 = document.getElementById('chartMensal').getContext('2d');
   if (chartMes) chartMes.destroy();
   chartMes = new Chart(ctx2, {
     type: 'bar',
     data: {
-      labels: porMesFat.map(function(m) { return m.label; }),
+      labels: labels2,
       datasets: [
         {
           label: 'Produção',
