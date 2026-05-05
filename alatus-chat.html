@@ -246,7 +246,11 @@
 
 <div id="dash-toggle-bar" onclick="toggleDashboard()" role="button" aria-expanded="true" aria-controls="dashboard">
   <div class="dash-label">📊 Dashboard · <span id="dash-updated">a carregar...</span></div>
-  <span id="dash-arrow">▲</span>
+  <div style="display:flex;align-items:center;gap:8px">
+    <button id="refresh-btn" onclick="event.stopPropagation();refreshDashboard()" title="Actualizar dados"
+      style="background:none;border:1px solid #2d7a5a;color:#2d7a5a;border-radius:50%;width:22px;height:22px;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;line-height:1">↻</button>
+    <span id="dash-arrow">▲</span>
+  </div>
 </div>
 
 <div id="dashboard" role="region" aria-label="Dashboard de métricas">
@@ -488,7 +492,18 @@ async function loadDashboard() {
   } catch (err) {
     const el = document.getElementById('dash-loading');
     el.textContent = 'Erro ao carregar dados: ' + err.message;
+  } finally {
+    const btn = document.getElementById('refresh-btn');
+    if (btn) { btn.textContent = '↻'; btn.disabled = false; }
   }
+}
+
+function refreshDashboard() {
+  const btn = document.getElementById('refresh-btn');
+  btn.textContent = '…';
+  btn.disabled = true;
+  document.getElementById('dash-updated').textContent = 'a actualizar...';
+  loadDashboard();
 }
 
 // ── Chat ─────────────────────────────────────────────────────────
