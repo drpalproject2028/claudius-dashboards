@@ -252,6 +252,8 @@
 <div id="dash-toggle-bar" onclick="toggleDashboard()" role="button" aria-expanded="true" aria-controls="dashboard">
   <div class="dash-label">📊 Dashboard · <span id="dash-updated">a carregar...</span></div>
   <div style="display:flex;align-items:center;gap:8px">
+    <button id="new-chat-btn" onclick="event.stopPropagation();newChat()" title="Nova conversa (limpar memória do agente)"
+      style="background:none;border:1px solid #2a5a8f;color:#2a5a8f;border-radius:11px;height:22px;padding:0 9px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;font-weight:600">+ Nova conversa</button>
     <button id="refresh-btn" onclick="event.stopPropagation();refreshDashboard()" title="Actualizar dados"
       style="background:none;border:1px solid #2d7a5a;color:#2d7a5a;border-radius:50%;width:22px;height:22px;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;line-height:1">↻</button>
     <span id="dash-arrow">▲</span>
@@ -323,6 +325,37 @@ let sessionId = localStorage.getItem('alatus-session-id');
 if (!sessionId) {
   sessionId = 'alatus-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
   localStorage.setItem('alatus-session-id', sessionId);
+}
+
+function newChat() {
+  sessionId = 'alatus-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+  localStorage.setItem('alatus-session-id', sessionId);
+  const chatAreaEl = document.getElementById('chat-area');
+  if (!chatAreaEl) return;
+  while (chatAreaEl.firstChild) chatAreaEl.removeChild(chatAreaEl.firstChild);
+  const welcome = document.createElement('div');
+  welcome.className = 'welcome';
+  welcome.id = 'welcome';
+  const img = document.createElement('img');
+  img.src = 'alatus-logo.png';
+  img.alt = 'ALATUS';
+  img.setAttribute('style', 'width:56px;height:56px;border-radius:12px;margin-bottom:10px');
+  welcome.appendChild(img);
+  const p = document.createElement('p');
+  p.textContent = 'Nova conversa iniciada. O agente vai consultar a folha de novo a cada pergunta.';
+  welcome.appendChild(p);
+  const sugg = document.createElement('div');
+  sugg.className = 'suggestions';
+  ['Quantos processos existem?','Quais estão em FATURADO?','Total de comissões CA','Processos do André','Quais ainda não foram recebidos?'].forEach(function(t){
+    const b = document.createElement('button');
+    b.className = 'suggestion-btn';
+    b.textContent = t;
+    b.onclick = function(){ sendSuggestion(b); };
+    sugg.appendChild(b);
+  });
+  welcome.appendChild(sugg);
+  chatAreaEl.appendChild(welcome);
+  loadDashboard();
 }
 
 const chatArea  = document.getElementById('chat-area');
@@ -495,7 +528,7 @@ function renderCharts(data) {
 
 async function loadDashboard() {
   try {
-    const res = await fetch(DATA_URL);
+    const res = await fetch(DATA_URL + '?_=' + Date.now(), { cache: 'no-store' });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
     document.getElementById('dash-loading').style.display = 'none';
