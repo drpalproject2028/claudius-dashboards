@@ -465,7 +465,15 @@ function renderCharts(data) {
 
   // Chart 2 — Monthly faturação + produção (grouped vertical bar)
   const porMesProd = data.porMesProd || [];
-  const labels2 = porMesFat.map(function(m) { return m.label; });
+  const MONTHS_ORDER = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const monthsSeen = new Set();
+  porMesFat.forEach(function(m) { monthsSeen.add(m.label); });
+  porMesProd.forEach(function(m) { monthsSeen.add(m.label); });
+  const labels2 = MONTHS_ORDER.filter(function(mo) { return monthsSeen.has(mo); });
+  const prodByLabel = {};
+  porMesProd.forEach(function(m) { prodByLabel[m.label] = m.producao || 0; });
+  const fatByLabel = {};
+  porMesFat.forEach(function(m) { fatByLabel[m.label] = m.fat_valor || 0; });
   const ctx2 = document.getElementById('chartMensal').getContext('2d');
   if (chartMes) chartMes.destroy();
   chartMes = new Chart(ctx2, {
@@ -475,13 +483,13 @@ function renderCharts(data) {
       datasets: [
         {
           label: 'Produção',
-          data: porMesProd.map(function(m) { return m.producao || 0; }),
+          data: labels2.map(function(l) { return prodByLabel[l] || 0; }),
           backgroundColor: GREEN,
           borderRadius: 3
         },
         {
           label: 'Faturação',
-          data: porMesFat.map(function(m) { return m.fat_valor || 0; }),
+          data: labels2.map(function(l) { return fatByLabel[l] || 0; }),
           backgroundColor: BLUE,
           borderRadius: 3
         }
