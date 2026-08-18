@@ -51,8 +51,10 @@ h1 { font-size: 1.2rem; color: #c9a84c; }
 
 <script>
 const SUPABASE_URL = 'https://btkdpjlltekssobfzdhu.supabase.co';
-const PAL_API = SUPABASE_URL + '/functions/v1/pal-api';
-const AUTH = 'Bearer 4fd8d787e2046a51a978675bc88efd9829fbb0b214b7a4b2';
+// 18/08/2026: deixou de usar pal-api directamente (exigia o bearer partilhado
+// no browser, visível a qualquer visitante). Esta função é pública, só GET,
+// só devolve current_session_state — sem segredo nenhum no cliente.
+const SESSION_API = SUPABASE_URL + '/functions/v1/pal-session-public';
 
 const SITES = [
   { name: 'Dashboard', url: 'https://claudius-dashboards.vercel.app' },
@@ -64,17 +66,16 @@ const SITES = [
 
 async function loadSession() {
   try {
-    const res = await fetch(PAL_API + '/memory', { headers: { 'Authorization': AUTH } });
-    const memories = await res.json();
-    const session = memories.find(m => m.key === 'current_session_state');
-    
+    const res = await fetch(SESSION_API);
+    const session = await res.json();
+
     if (!session) {
       document.getElementById('content').innerHTML = '<div class="card"><h2>Sem sessão activa</h2><pre>Nenhum session-state sincronizado.</pre></div>';
       return;
     }
 
-    const content = session.value.content;
-    const synced = session.value.synced_at || session.updated_at;
+    const content = typeof session.value === 'string' ? session.value : (session.value?.content ?? JSON.stringify(session.value));
+    const synced = (typeof session.value === 'object' && session.value?.synced_at) || session.updated_at;
     document.getElementById('sync-time').textContent = 'Sync: ' + new Date(synced).toLocaleString('pt-PT', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' });
 
     // Parse markdown sections
