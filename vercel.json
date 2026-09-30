@@ -18,11 +18,15 @@
     },
     {
       "source": "/alatus-chat",
-      "destination": "/alatus-chat.html"
+      "destination": "/pact-v2.html"
     },
     {
       "source": "/pact-v2",
       "destination": "/pact-v2.html"
+    },
+    {
+      "source": "/pact-v1",
+      "destination": "/alatus-chat.html"
     }
   ]
 }
