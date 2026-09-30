@@ -49,6 +49,12 @@
   td { padding: 6px 8px; text-align: right; border-bottom: 1px solid #ece8dc; white-space: nowrap; }
   tr.total td { background: #f0f7f3; font-weight: 700; border-bottom: none; }
   .medalha { display: inline-block; width: 1.4em; }
+  #bloco-actividade th:first-child, #bloco-actividade td:first-child { position: sticky; left: 0; z-index: 1; }
+  #bloco-actividade td:first-child { background: var(--papel); }
+  #bloco-actividade tr.total td:first-child { background: #f0f7f3; }
+  .desliza { font-size: 11px; color: var(--suave); margin-top: 4px; }
+  @media (min-width: 560px) { .desliza { display: none; } }
+  .nota-h2 { text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--suave); }
 
   .filtros { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 10px; }
   .chip { background: var(--papel); border: 1px solid var(--verde); color: var(--verde); padding: 5px 11px; border-radius: 16px;
@@ -124,6 +130,26 @@
     </section>
   </div>
 
+  <section class="cartao" id="bloco-actividade" hidden>
+    <h2>Actividade no CRM <span id="act-ate" class="nota-h2"></span></h2>
+    <div class="filtros" role="group" aria-label="Período da actividade">
+      <button class="chip chip-act" type="button" data-periodo="ANO" aria-pressed="true">Ano</button>
+      <button class="chip chip-act" type="button" data-periodo="1" aria-pressed="false">1.º trim.</button>
+      <button class="chip chip-act" type="button" data-periodo="2" aria-pressed="false">2.º trim.</button>
+      <button class="chip chip-act" type="button" data-periodo="3" aria-pressed="false">3.º trim.</button>
+      <button class="chip chip-act" type="button" data-periodo="4" aria-pressed="false">4.º trim.</button>
+    </div>
+    <div class="tabela-wrap">
+      <table>
+        <thead><tr><th>Consultor</th><th title="Contactos com clientes vendedores">Cont. vend.</th><th title="Apresentações de serviço">Apres.</th>
+          <th title="Angariações (em exclusivo)">Angar. (excl.)</th><th title="Visitas com clientes compradores">Visitas</th>
+          <th title="Ofertas">Ofertas</th><th title="Transações (CV + CC)">Transações</th><th title="Produzido no período (parte da equipa, sem caídos)">Produzido</th></tr></thead>
+        <tbody id="actividade"></tbody>
+      </table>
+    </div>
+    <p class="desliza">Desliza a tabela para o lado para ver todas as colunas →</p>
+  </section>
+
   <section class="cartao" id="bloco-processos" hidden>
     <h2>Processos 2026</h2>
     <div class="filtros" role="group" aria-label="Filtrar por estado">
@@ -145,6 +171,7 @@
   Os números são calculados directamente do controlo mensal de produção e faturação da equipa (ficheiros PRODUÇÃO e
   FATURAÇÃO), sem inteligência artificial. Valores = parte da equipa Paulo em cada processo.
   "Fase" é a coluna FAC do mapa de processos da solicitadora, tal como está escrita.
+  "Actividade no CRM" vem do relatório de equipa do CRM ERA (acções concluídas), conferido mês a mês com os totais do relatório.
 </footer>
 
 <script>
@@ -158,7 +185,7 @@ const eurCurto = v => v >= 1000 ? (v / 1000).toLocaleString('pt-PT', { maximumFr
 const estadoCls = e => e === 'FATURADO PARCIAL' ? 'PARCIAL' : e;
 const $ = id => document.getElementById(id);
 
-let dados = null, grafico = null, filtroEstado = 'TODOS';
+let dados = null, grafico = null, filtroEstado = 'TODOS', periodoAct = 'ANO';
 
 function el(tag, attrs, ...filhos) {
   const n = document.createElement(tag);
@@ -262,6 +289,35 @@ function mostrarLista() {
   });
 }
 
+function mostrarActividade() {
+  const act = dados.actividade || [];
+  const noPeriodo = m => periodoAct === 'ANO' || Math.floor((m - 1) / 3) + 1 === Number(periodoAct);
+  const por = {};
+  const c = n => por[n] || (por[n] = { nome: n, cvc: 0, apr: 0, ang: 0, excl: 0, vis: 0, ofr: 0, tr: 0, prod: 0 });
+  act.filter(a => noPeriodo(a.mes)).forEach(a => {
+    const x = c(a.consultor);
+    x.cvc += a.cv_contactos; x.apr += a.apresentacoes; x.ang += a.angariacoes; x.excl += a.ang_exclusivos;
+    x.vis += a.visitas; x.ofr += a.ofertas; x.tr += a.transacoes;
+  });
+  dados.processos.filter(p => p.estado !== 'CAIU' && noPeriodo(p.mes)).forEach(p => {
+    if (Number(p.paulo_ang) > 0) c(p.angariador).prod += Number(p.paulo_ang);
+    if (Number(p.paulo_ven) > 0) c(p.vendedor).prod += Number(p.paulo_ven);
+  });
+  const tb = $('actividade'); tb.replaceChildren();
+  const linhas = Object.values(por).filter(x => act.some(a => a.consultor === x.nome)).sort((a, b) => b.ang - a.ang || b.tr - a.tr);
+  if (!linhas.length) { tb.append(el('tr', {}, el('td', { colspan: '8' }, 'Sem dados de actividade neste período.'))); return; }
+  const t = { cvc: 0, apr: 0, ang: 0, excl: 0, vis: 0, ofr: 0, tr: 0, prod: 0 };
+  linhas.forEach(x => {
+    Object.keys(t).forEach(k => t[k] += x[k]);
+    tb.append(el('tr', {}, el('td', {}, nomeBonito(x.nome)), el('td', {}, String(x.cvc)), el('td', {}, String(x.apr)),
+      el('td', {}, x.ang + ' (' + x.excl + ')'), el('td', {}, String(x.vis)), el('td', {}, String(x.ofr)),
+      el('td', {}, String(x.tr)), el('td', {}, eur0(x.prod))));
+  });
+  tb.append(el('tr', { class: 'total' }, el('td', {}, 'Equipa'), el('td', {}, String(t.cvc)), el('td', {}, String(t.apr)),
+    el('td', {}, t.ang + ' (' + t.excl + ')'), el('td', {}, String(t.vis)), el('td', {}, String(t.ofr)),
+    el('td', {}, String(t.tr)), el('td', {}, eur0(t.prod))));
+}
+
 function preencherConsultores(r) {
   const s = $('f-consultor'), atual = s.value;
   s.replaceChildren(el('option', { value: '' }, 'Todos os consultores'));
@@ -286,16 +342,25 @@ async function carregar() {
     mostrarKpis(r); mostrarRanking(r); preencherConsultores(r);
     $('blocos').hidden = false; $('bloco-processos').hidden = false;
     mostrarGrafico(r); mostrarLista();
+    if ((d.actividade || []).length) {
+      $('act-ate').textContent = '· CRM ERA, até ' + MESES[(d.actividade_ate_mes || 1) - 1].toLowerCase() + ' (sem a linha do director)';
+      $('bloco-actividade').hidden = false; mostrarActividade();
+    }
   } catch (e) {
     const s = $('estado-carga'); s.hidden = false; s.className = 'erro';
     s.textContent = 'Não foi possível carregar os dados (' + e.message + '). Tenta de novo daqui a pouco.';
   } finally { $('btn-actualizar').disabled = false; }
 }
 
-document.querySelectorAll('.chip').forEach(b => b.addEventListener('click', () => {
+document.querySelectorAll('.chip[data-estado]').forEach(b => b.addEventListener('click', () => {
   filtroEstado = b.dataset.estado;
-  document.querySelectorAll('.chip').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  document.querySelectorAll('.chip[data-estado]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
   mostrarLista();
+}));
+document.querySelectorAll('.chip-act').forEach(b => b.addEventListener('click', () => {
+  periodoAct = b.dataset.periodo;
+  document.querySelectorAll('.chip-act').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  mostrarActividade();
 }));
 $('f-consultor').addEventListener('change', mostrarLista);
 $('f-texto').addEventListener('input', mostrarLista);
