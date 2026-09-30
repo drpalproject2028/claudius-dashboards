@@ -54,6 +54,14 @@
   #bloco-actividade tr.total td:first-child { background: #f0f7f3; }
   .desliza { font-size: 11px; color: var(--suave); margin-top: 4px; }
   @media (min-width: 560px) { .desliza { display: none; } }
+  #bloco-2025 th:first-child, #bloco-2025 td:first-child { position: sticky; left: 0; z-index: 1; background: var(--papel); }
+  #bloco-2025 th:first-child { background: var(--verde); }
+  #bloco-2025 tr.total td:first-child { background: #f0f7f3; }
+  table.cmp td { vertical-align: top; }
+  .cmp .v26 { font-weight: 700; display: block; }
+  .cmp .v25 { font-size: 10px; color: var(--suave); display: block; }
+  .cmp .acima { color: var(--verde-esc); } .cmp .abaixo { color: var(--vermelho); }
+  .nota-cmp { font-size: 11px; color: var(--suave); margin-top: 6px; line-height: 1.4; }
   .nota-h2 { text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--suave); }
 
   .filtros { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 10px; }
@@ -148,6 +156,19 @@
       </table>
     </div>
     <p class="desliza">Desliza a tabela para o lado para ver todas as colunas →</p>
+  </section>
+
+  <section class="cartao" id="bloco-2025" hidden>
+    <h2>2026 face a 2025 <span id="cmp-nota" class="nota-h2"></span></h2>
+    <div class="tabela-wrap">
+      <table class="cmp">
+        <thead><tr><th>Consultor</th><th>Produção</th><th>Faturação</th><th>Angariações</th><th>Visitas</th><th>Transações</th></tr></thead>
+        <tbody id="cmp2025"></tbody>
+      </table>
+    </div>
+    <p class="desliza">Desliza a tabela para o lado para ver todas as colunas →</p>
+    <p class="nota-cmp">Em cada célula: <b>2026</b> até ao último mês com dados · por baixo, o ano inteiro de 2025 e a percentagem já feita.
+      Produção e faturação de 2025: relatórios de desempenho RD_2025. Actividade: relatório de equipa do CRM ERA (mesmo critério nos dois anos).</p>
   </section>
 
   <section class="cartao" id="bloco-processos" hidden>
@@ -318,6 +339,41 @@ function mostrarActividade() {
     el('td', {}, String(t.tr)), el('td', {}, eur0(t.prod))));
 }
 
+function mostrar2025(r) {
+  const a25 = dados.ano_2025 || [];
+  if (!a25.length) return;
+  const ate = Math.max(dados.actividade_ate_mes || 0, ...dados.faturas.map(f => f.mes), ...dados.processos.map(p => p.mes));
+  const ritmo = ate / 12;  // fracção do ano decorrida
+  const act = {};
+  (dados.actividade || []).forEach(x => {
+    const o = act[x.consultor] || (act[x.consultor] = { ang: 0, vis: 0, tr: 0 });
+    o.ang += x.angariacoes; o.vis += x.visitas; o.tr += x.transacoes;
+  });
+  const r26 = {}; r.ranking.forEach(x => r26[x.nome] = x);
+  const cel = (v26, v25, fmt) => {
+    const pct = v25 ? Math.round(100 * v26 / v25) : null;
+    const cls = pct == null ? '' : (pct >= 100 * ritmo ? 'acima' : 'abaixo');
+    return el('td', {}, el('span', { class: 'v26' }, fmt(v26)),
+      el('span', { class: 'v25' }, '2025: ' + fmt(v25) + (pct == null ? '' : ' · '), pct == null ? null : el('b', { class: cls }, pct + '%')));
+  };
+  const n = x => String(Math.round(x));
+  const tb = $('cmp2025'); tb.replaceChildren();
+  const t26 = { prod: 0, fat: 0, ang: 0, vis: 0, tr: 0 }, t25 = { prod: 0, fat: 0, ang: 0, vis: 0, tr: 0 };
+  a25.slice().sort((x, y) => (r26[y.consultor]?.prod || 0) - (r26[x.consultor]?.prod || 0)).forEach(x => {
+    const c26 = r26[x.consultor] || { prod: 0, fat: 0 }, ac = act[x.consultor] || { ang: 0, vis: 0, tr: 0 };
+    const v26 = { prod: c26.prod, fat: c26.fat, ang: ac.ang, vis: ac.vis, tr: ac.tr };
+    const v25 = { prod: Number(x.producao), fat: Number(x.faturacao), ang: x.angariacoes || 0, vis: x.visitas || 0, tr: x.transacoes || 0 };
+    Object.keys(t26).forEach(k => { t26[k] += v26[k]; t25[k] += v25[k]; });
+    tb.append(el('tr', {}, el('td', {}, nomeBonito(x.consultor)), cel(v26.prod, v25.prod, eur0), cel(v26.fat, v25.fat, eur0),
+      cel(v26.ang, v25.ang, n), cel(v26.vis, v25.vis, n), cel(v26.tr, v25.tr, n)));
+  });
+  tb.append(el('tr', { class: 'total' }, el('td', {}, 'Equipa'), cel(t26.prod, t25.prod, eur0), cel(t26.fat, t25.fat, eur0),
+    cel(t26.ang, t25.ang, n), cel(t26.vis, t25.vis, n), cel(t26.tr, t25.tr, n)));
+  $('cmp-nota').textContent = '· 2026 até ' + MESES[ate - 1].toLowerCase() + ' (' + Math.round(100 * ritmo) +
+    '% do ano): verde = ao ritmo de 2025 ou acima, vermelho = abaixo';
+  $('bloco-2025').hidden = false;
+}
+
 function preencherConsultores(r) {
   const s = $('f-consultor'), atual = s.value;
   s.replaceChildren(el('option', { value: '' }, 'Todos os consultores'));
@@ -342,6 +398,7 @@ async function carregar() {
     mostrarKpis(r); mostrarRanking(r); preencherConsultores(r);
     $('blocos').hidden = false; $('bloco-processos').hidden = false;
     mostrarGrafico(r); mostrarLista();
+    mostrar2025(r);
     if ((d.actividade || []).length) {
       $('act-ate').textContent = '· CRM ERA, até ' + MESES[(d.actividade_ate_mes || 1) - 1].toLowerCase() + ' (sem a linha do director)';
       $('bloco-actividade').hidden = false; mostrarActividade();
