@@ -74,6 +74,9 @@
   .obj-ritmo { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--texto); opacity: .55; }
   .obj-det { font-size: 11px; color: var(--suave); margin-top: 3px; }
   .obj-linha.equipa { border-top: 1px solid var(--linha); padding-top: 8px; }
+  .ref-texto { font-size: 13px; margin-bottom: 8px; line-height: 1.45; }
+  .ref-texto b { color: var(--verde-esc); }
+  .neutro { color: var(--suave); }
   .nota-h2 { text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--suave); }
 
   .filtros { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 10px; }
@@ -142,6 +145,14 @@
       <button class="chip chip-obj" type="button" data-obj="ang_exclusivos" aria-pressed="false">Exclusivos</button>
     </div>
     <div id="obj-lista" class="obj-lista"></div>
+  </section>
+
+  <section class="cartao" id="bloco-ref" hidden>
+    <h2>Referência mensal <span id="ref-nota" class="nota-h2"></span></h2>
+    <p class="ref-texto" id="ref-texto"></p>
+    <div class="tabela-wrap">
+      <table class="cmp"><thead id="ref-cab"></thead><tbody id="ref-corpo"></tbody></table>
+    </div>
   </section>
 
   <section class="cartao" id="bloco-caminho" hidden>
@@ -415,6 +426,39 @@ function mostrarObjectivos(r) {
   $('bloco-obj').hidden = false;
 }
 
+function mostrarReferencias() {
+  const refs = dados.referencias || [];
+  if (!refs.length) return;
+  const desde = Math.min(...refs.map(x => x.desde_mes));
+  const act = dados.actividade || [];
+  const mesesContam = [...new Set(act.filter(a => a.mes >= desde).map(a => a.mes))].sort((a, b) => a - b);
+  const aContar = mesesContam.length > 0;
+  const base = aContar ? null : Math.max(0, ...act.map(a => a.mes));  // ponto de partida: último mês antes de começar
+  const campo = { cc_visitas: 'visitas', cc_contactos: 'cc_contactos' };
+  $('ref-texto').replaceChildren(...refs.flatMap((x, i) => [i ? ' · ' : '', x.descricao + ': ', el('b', {}, x.valor_mensal + ' por mês')]),
+    aContar ? '' : '. Começa a contar com os dados de ' + MESES[desde - 1].toLowerCase() + '.');
+  $('ref-nota').textContent = aContar
+    ? '· desde ' + MESES[desde - 1].toLowerCase() + ' (' + mesesContam.length + (mesesContam.length > 1 ? ' meses' : ' mês') + ')'
+    : '· a partir de ' + MESES[desde - 1].toLowerCase() + ' · abaixo, o ponto de partida (' + (base ? MESES[base - 1].toLowerCase() : '—') + ')';
+  $('ref-cab').replaceChildren(el('tr', {}, el('th', {}, 'Consultor'), ...refs.map(x => el('th', {}, x.descricao.replace(' com clientes compradores', '')))));
+  const soma = {};
+  act.filter(a => aContar ? a.mes >= desde : a.mes === base).forEach(a => {
+    const o = soma[a.consultor] || (soma[a.consultor] = {});
+    refs.forEach(x => o[x.indicador] = (o[x.indicador] || 0) + (a[campo[x.indicador]] || 0));
+  });
+  const tb = $('ref-corpo'); tb.replaceChildren();
+  Object.keys(soma).sort((a, b) => (soma[b].cc_visitas || 0) - (soma[a].cc_visitas || 0)).forEach(n => {
+    tb.append(el('tr', {}, el('td', {}, nomeBonito(n)), ...refs.map(x => {
+      const v = soma[n][x.indicador] || 0, alvo = x.valor_mensal * (aContar ? mesesContam.length : 1);
+      const pct = Math.round(100 * v / alvo);
+      return el('td', {}, el('span', { class: 'v26' }, String(v) + ' de ' + alvo),
+        el('span', { class: 'v25' }, el('b', { class: aContar ? (v >= alvo ? 'acima' : 'abaixo') : 'neutro' }, pct + '%'),
+          aContar ? '' : ' (em ' + MESES[base - 1].toLowerCase() + ')'));
+    })));
+  });
+  $('bloco-ref').hidden = false;
+}
+
 function mostrarCaminho(r) {
   const f = dados.funil_2025, objs = dados.objectivos || [];
   if (!f || !objs.length || !f.valor_por_transacao) return;
@@ -519,7 +563,7 @@ async function carregar() {
     mostrarKpis(r); mostrarRanking(r); preencherConsultores(r);
     $('blocos').hidden = false; $('bloco-processos').hidden = false;
     mostrarGrafico(r); mostrarLista();
-    mostrarObjectivos(r); mostrarCaminho(r); mostrar2025(r);
+    mostrarObjectivos(r); mostrarReferencias(); mostrarCaminho(r); mostrar2025(r);
     if ((d.actividade || []).length) {
       $('act-ate').textContent = '· CRM ERA, até ' + MESES[(d.actividade_ate_mes || 1) - 1].toLowerCase() + ' (sem a linha do director)';
       $('bloco-actividade').hidden = false; mostrarActividade();
