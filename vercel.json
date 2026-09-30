@@ -1,9 +1,28 @@
 {
   "rewrites": [
-    { "source": "/", "destination": "/landing.html" },
-    { "source": "/mobile", "destination": "/mobile.html" },
-    { "source": "/concepts", "destination": "/concepts.html" },
-    { "source": "/pact", "destination": "/pact.html" },
-    { "source": "/alatus-chat", "destination": "/alatus-chat.html" }
+    {
+      "source": "/",
+      "destination": "/landing.html"
+    },
+    {
+      "source": "/mobile",
+      "destination": "/mobile.html"
+    },
+    {
+      "source": "/concepts",
+      "destination": "/concepts.html"
+    },
+    {
+      "source": "/pact",
+      "destination": "/pact.html"
+    },
+    {
+      "source": "/alatus-chat",
+      "destination": "/alatus-chat.html"
+    },
+    {
+      "source": "/pact-v2",
+      "destination": "/pact-v2.html"
+    }
   ]
 }

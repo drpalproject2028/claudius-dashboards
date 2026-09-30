@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PACT — Processos da Equipa</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js" integrity="sha384-e6cc9LaIG7xZ3XD5B+jtr1NhTWPQGQdRCh6xiZ+ZFUtWCpg4ycv3Sh+SkZoopvUY" crossorigin="anonymous"></script>
+<style>
+  :root {
+    --verde: #2d7a5a; --verde-esc: #245e45; --verde-cl: #e8f5ee;
+    --creme: #f5f0e0; --papel: #fff; --linha: #e0dcd0; --texto: #1a2a1a; --suave: #5a7a5a;
+    --azul: #2a5a8f; --ouro: #c9a84c; --vermelho: #b5453a;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--creme);
+         color: var(--texto); min-height: 100dvh; }
+
+  header { background: var(--verde); color: var(--creme); padding: 14px 16px; display: flex; align-items: center;
+           gap: 10px; box-shadow: 0 2px 6px rgba(0,0,0,.2); }
+  header img { width: 42px; height: 42px; border-radius: 8px; flex-shrink: 0; }
+  header .title { font-size: 16px; font-weight: 700; letter-spacing: .3px; }
+  header .sub { font-size: 11px; opacity: .8; margin-top: 1px; }
+
+  .barra { background: var(--verde-cl); border-bottom: 1px solid #c5e0d0; padding: 6px 16px; display: flex;
+           align-items: center; justify-content: space-between; font-size: 12px; color: var(--verde); font-weight: 600;
+           position: sticky; top: 0; z-index: 5; }
+  .barra button { background: none; border: 1px solid var(--verde); color: var(--verde); border-radius: 11px;
+                  height: 24px; padding: 0 10px; font-size: 12px; cursor: pointer; }
+
+  main { max-width: 1100px; margin: 0 auto; padding: 14px 16px 40px; display: grid; gap: 14px; }
+  .kpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  @media (min-width: 760px) { .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  .kpi { background: var(--papel); border: 1px solid var(--linha); border-radius: 10px; padding: 10px 12px; }
+  .kpi .rot { font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: var(--suave); font-weight: 700; }
+  .kpi .val { font-size: 22px; font-weight: 800; margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .kpi .det { font-size: 11px; color: var(--suave); margin-top: 2px; }
+
+  .cartao { background: var(--papel); border: 1px solid var(--linha); border-radius: 10px; padding: 12px; min-width: 0; }
+  .cartao h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--suave); margin-bottom: 8px; }
+  .duas { display: grid; gap: 14px; }
+  @media (min-width: 900px) { .duas { grid-template-columns: 1fr 1fr; } }
+  .grafico { position: relative; height: 240px; }
+
+  .tabela-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; }
+  th { background: var(--verde); color: var(--creme); padding: 6px 8px; text-align: right; font-weight: 600; white-space: nowrap; }
+  th:first-child, td:first-child { text-align: left; }
+  @media (max-width: 480px) { table { font-size: 11px; } th, td { padding: 5px 3px !important; } .medalha { width: 1.2em; } }
+  td { padding: 6px 8px; text-align: right; border-bottom: 1px solid #ece8dc; white-space: nowrap; }
+  tr.total td { background: #f0f7f3; font-weight: 700; border-bottom: none; }
+  .medalha { display: inline-block; width: 1.4em; }
+
+  .filtros { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 10px; }
+  .chip { background: var(--papel); border: 1px solid var(--verde); color: var(--verde); padding: 5px 11px; border-radius: 16px;
+          font-size: 12px; cursor: pointer; }
+  .chip[aria-pressed="true"] { background: var(--verde); color: var(--creme); }
+  select, input[type=search] { border: 1px solid #c8c0a8; border-radius: 16px; padding: 5px 10px; font-size: 12px;
+                               background: var(--creme); color: var(--texto); font-family: inherit; }
+  input[type=search] { flex: 1; min-width: 140px; }
+
+  .lista { display: grid; gap: 8px; }
+  @media (min-width: 760px) { .lista { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .proc { border: 1px solid var(--linha); border-left: 4px solid var(--ouro); border-radius: 8px; padding: 9px 11px; background: #fbfaf6; }
+  .proc.FATURADO { border-left-color: var(--verde); }
+  .proc.CAIU { border-left-color: var(--vermelho); opacity: .75; }
+  .proc.PARCIAL { border-left-color: var(--azul); }
+  .proc .topo { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .proc .cod { font-weight: 800; font-size: 14px; }
+  .proc .mes { font-size: 11px; color: var(--suave); }
+  .estado { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 9px; text-transform: uppercase; white-space: nowrap;
+            background: #f6ecd0; color: #7a5d12; }
+  .estado.FATURADO { background: #dcefe4; color: var(--verde-esc); }
+  .estado.CAIU { background: #f4d9d5; color: var(--vermelho); }
+  .estado.PARCIAL { background: #dbe6f3; color: var(--azul); }
+  .proc .com { font-size: 12px; margin: 3px 0 6px; }
+  .proc .nums { display: flex; gap: 12px; font-size: 12px; flex-wrap: wrap; font-variant-numeric: tabular-nums; }
+  .proc .nums b { font-weight: 700; }
+  .proc .fase { font-size: 11px; color: #3a4a3a; margin-top: 6px; background: var(--verde-cl); padding: 4px 7px; border-radius: 5px; }
+  .proc .fase small { color: var(--suave); }
+  .vazio, .erro { font-size: 13px; color: var(--suave); padding: 16px 0; text-align: center; }
+  .erro { color: var(--vermelho); }
+
+  footer { max-width: 1100px; margin: 0 auto; padding: 0 16px 24px; font-size: 11px; color: var(--suave); line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<header>
+  <img src="alatus-logo.png" alt="ALATUS">
+  <div>
+    <div class="title">PACT — Processos da Equipa</div>
+    <div class="sub">ERA Porto Baixa / Centro · Equipa Alatus · powered by PALCORE</div>
+  </div>
+</header>
+
+<div class="barra">
+  <span id="fonte">A carregar…</span>
+  <button id="btn-actualizar" type="button">↻ Actualizar</button>
+</div>
+
+<main>
+  <p class="vazio" id="estado-carga">A carregar dados…</p>
+
+  <section class="kpis" id="kpis" hidden>
+    <div class="kpi"><div class="rot">Produzido 2026</div><div class="val" id="k-prod"></div><div class="det" id="k-prod-d"></div></div>
+    <div class="kpi"><div class="rot">Faturado 2026</div><div class="val" id="k-fat"></div><div class="det" id="k-fat-d"></div></div>
+    <div class="kpi"><div class="rot">Por faturar</div><div class="val" id="k-por"></div><div class="det" id="k-por-d"></div></div>
+    <div class="kpi"><div class="rot">Caíram</div><div class="val" id="k-caiu"></div><div class="det" id="k-caiu-d"></div></div>
+  </section>
+
+  <div class="duas" id="blocos" hidden>
+    <section class="cartao">
+      <h2>Ranking 2026 por consultor</h2>
+      <div class="tabela-wrap">
+        <table>
+          <thead><tr><th>Consultor</th><th>Produzido</th><th>Faturado</th><th>Falta</th><th title="Angariações / Vendas em 2026">Ang./Vend.</th></tr></thead>
+          <tbody id="ranking"></tbody>
+        </table>
+      </div>
+    </section>
+    <section class="cartao">
+      <h2>Produção e faturação por mês</h2>
+      <div class="grafico"><canvas id="grafico-mes" role="img" aria-label="Produção e faturação da equipa por mês"></canvas></div>
+    </section>
+  </div>
+
+  <section class="cartao" id="bloco-processos" hidden>
+    <h2>Processos 2026</h2>
+    <div class="filtros" role="group" aria-label="Filtrar por estado">
+      <button class="chip" type="button" data-estado="TODOS" aria-pressed="true">Todos</button>
+      <button class="chip" type="button" data-estado="EM CURSO" aria-pressed="false">Em curso</button>
+      <button class="chip" type="button" data-estado="PARCIAL" aria-pressed="false">Faturado em parte</button>
+      <button class="chip" type="button" data-estado="FATURADO" aria-pressed="false">Faturado</button>
+      <button class="chip" type="button" data-estado="CAIU" aria-pressed="false">Caíram</button>
+    </div>
+    <div class="filtros">
+      <select id="f-consultor" aria-label="Filtrar por consultor"><option value="">Todos os consultores</option></select>
+      <input type="search" id="f-texto" placeholder="Procurar processo ou nome…" aria-label="Procurar">
+    </div>
+    <div class="lista" id="lista"></div>
+  </section>
+</main>
+
+<footer>
+  Os números são calculados directamente do controlo mensal de produção e faturação da equipa (ficheiros PRODUÇÃO e
+  FATURAÇÃO), sem inteligência artificial. Valores = parte da equipa Paulo em cada processo.
+  "Fase" é a coluna FAC do mapa de processos da solicitadora, tal como está escrita.
+</footer>
+
+<script>
+const DADOS_URL = 'https://n8n-production-056d.up.railway.app/webhook/alatus-pact-v2';
+const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+const NOMES = { ANDRE: 'André', JOAO: 'João' };
+const nomeBonito = n => NOMES[n] || (n ? n.charAt(0) + n.slice(1).toLowerCase() : '—');
+const eur = v => (Math.round(v * 100) / 100).toLocaleString('pt-PT', { style: 'currency', currency: 'EUR', useGrouping: 'always' });
+const eur0 = v => Math.round(v).toLocaleString('pt-PT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0, useGrouping: 'always' });
+const eurCurto = v => v >= 1000 ? (v / 1000).toLocaleString('pt-PT', { maximumFractionDigits: 1 }) + ' mil €' : eur(v);
+const estadoCls = e => e === 'FATURADO PARCIAL' ? 'PARCIAL' : e;
+const $ = id => document.getElementById(id);
+
+let dados = null, grafico = null, filtroEstado = 'TODOS';
+
+function el(tag, attrs, ...filhos) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (k === 'class') n.className = v; else n.setAttribute(k, v);
+  }
+  for (const f of filhos) if (f != null) n.append(f);
+  return n;
+}
+
+function calcular(d) {
+  const vivos = d.processos.filter(p => p.estado !== 'CAIU');
+  const caidos = d.processos.filter(p => p.estado === 'CAIU');
+  const soma = (xs, f) => xs.reduce((s, x) => s + (Number(f(x)) || 0), 0);
+
+  const prodMes = Array(12).fill(0), fatMes = Array(12).fill(0);
+  vivos.forEach(p => prodMes[p.mes - 1] += Number(p.parte_paulo));
+  d.faturas.forEach(f => fatMes[f.mes - 1] += Number(f.parte_paulo));
+
+  const cons = {};
+  const c = n => cons[n] || (cons[n] = { nome: n, prod: 0, fat: 0, por: 0, ang: 0, ven: 0 });
+  vivos.forEach(p => {
+    const tot = Number(p.parte_paulo) || 1;
+    if (Number(p.paulo_ang) > 0) { const x = c(p.angariador); x.prod += Number(p.paulo_ang); x.ang++; x.por += Number(p.por_faturar) * p.paulo_ang / tot; }
+    if (Number(p.paulo_ven) > 0) { const x = c(p.vendedor); x.prod += Number(p.paulo_ven); x.ven++; x.por += Number(p.por_faturar) * p.paulo_ven / tot; }
+  });
+  d.faturas.forEach(f => {
+    if (Number(f.paulo_ang) > 0) c(f.angariador).fat += Number(f.paulo_ang);
+    if (Number(f.paulo_ven) > 0) c(f.vendedor).fat += Number(f.paulo_ven);
+  });
+
+  return {
+    prod: soma(vivos, p => p.parte_paulo), nVivos: vivos.length,
+    fat: soma(d.faturas, f => f.parte_paulo), nFat: d.faturas.length,
+    por: soma(vivos, p => p.por_faturar), nPor: vivos.filter(p => Number(p.por_faturar) > 0.5).length,
+    caido: soma(caidos, p => p.parte_paulo), nCaidos: caidos.length,
+    prodMes, fatMes,
+    ranking: Object.values(cons).sort((a, b) => b.prod - a.prod || b.fat - a.fat),
+  };
+}
+
+function mostrarKpis(r) {
+  $('k-prod').textContent = eurCurto(r.prod); $('k-prod-d').textContent = r.nVivos + ' processos (sem os que caíram)';
+  $('k-fat').textContent = eurCurto(r.fat); $('k-fat-d').textContent = r.nFat + ' faturas com parte da equipa';
+  $('k-por').textContent = eurCurto(r.por); $('k-por-d').textContent = r.nPor + ' processos';
+  $('k-caiu').textContent = eurCurto(r.caido); $('k-caiu-d').textContent = r.nCaidos + ' processos com valor na produção';
+  $('kpis').hidden = false;
+}
+
+function mostrarRanking(r) {
+  const tb = $('ranking'); tb.replaceChildren();
+  const med = ['🥇', '🥈', '🥉'];
+  r.ranking.forEach((x, i) => tb.append(el('tr', {},
+    el('td', {}, el('span', { class: 'medalha' }, med[i] || ''), nomeBonito(x.nome)),
+    el('td', {}, eur0(x.prod)), el('td', {}, eur0(x.fat)), el('td', {}, eur0(x.por)),
+    el('td', {}, x.ang + ' / ' + x.ven))));
+  const t = r.ranking.reduce((a, x) => ({ prod: a.prod + x.prod, fat: a.fat + x.fat, por: a.por + x.por, ang: a.ang + x.ang, ven: a.ven + x.ven }),
+                             { prod: 0, fat: 0, por: 0, ang: 0, ven: 0 });
+  tb.append(el('tr', { class: 'total' }, el('td', {}, 'Equipa'), el('td', {}, eur0(t.prod)), el('td', {}, eur0(t.fat)),
+                                        el('td', {}, eur0(t.por)), el('td', {}, t.ang + ' / ' + t.ven)));
+}
+
+function mostrarGrafico(r) {
+  const ult = Math.max(...r.prodMes.map((v, i) => v ? i : -1), ...r.fatMes.map((v, i) => v ? i : -1));
+  const labels = MESES.slice(0, ult + 1);
+  if (grafico) grafico.destroy();
+  grafico = new Chart($('grafico-mes'), {
+    type: 'bar',
+    data: { labels, datasets: [
+      { label: 'Produzido (sem caídos)', data: r.prodMes.slice(0, ult + 1), backgroundColor: '#2d7a5a', borderRadius: 3 },
+      { label: 'Faturado', data: r.fatMes.slice(0, ult + 1), backgroundColor: '#2a5a8f', borderRadius: 3 } ] },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 } },
+                 tooltip: { callbacks: { label: ctx => ' ' + ctx.dataset.label + ': ' + eur(ctx.parsed.y) } } },
+      scales: { y: { ticks: { font: { size: 10 }, callback: v => eurCurto(v) }, grid: { color: '#ece8dc' } },
+                x: { ticks: { font: { size: 11 } }, grid: { display: false } } } }
+  });
+}
+
+function mostrarLista() {
+  const cons = $('f-consultor').value, q = $('f-texto').value.trim().toUpperCase();
+  const lista = $('lista'); lista.replaceChildren();
+  const ps = dados.processos.filter(p =>
+    (filtroEstado === 'TODOS' || estadoCls(p.estado) === filtroEstado) &&
+    (!cons || (p.angariador === cons && Number(p.paulo_ang) > 0) || (p.vendedor === cons && Number(p.paulo_ven) > 0)) &&
+    (!q || (p.chave + ' ' + p.comerciais).toUpperCase().includes(q)));
+  if (!ps.length) { lista.append(el('p', { class: 'vazio' }, 'Nenhum processo com estes filtros.')); return; }
+  ps.slice().sort((a, b) => b.mes - a.mes || a.chave.localeCompare(b.chave, 'pt', { numeric: true })).forEach(p => {
+    const cls = estadoCls(p.estado);
+    const card = el('article', { class: 'proc ' + cls },
+      el('div', { class: 'topo' },
+        el('span', {}, el('span', { class: 'cod' }, p.chave), ' ', el('span', { class: 'mes' }, '· ' + MESES[p.mes - 1] + ' · ' + (p.solicitadora || ''))),
+        el('span', { class: 'estado ' + cls }, cls === 'PARCIAL' ? 'Faturado em parte' : p.estado.toLowerCase())),
+      el('div', { class: 'com' }, p.comerciais + (p.equipa && p.equipa !== 'PAULO' ? ' · ' + p.equipa.toLowerCase() : '')),
+      el('div', { class: 'nums' },
+        el('span', {}, 'Equipa: ', el('b', {}, eur(p.parte_paulo))),
+        el('span', {}, 'Faturado: ', el('b', {}, eur(p.faturado_paulo))),
+        p.estado === 'CAIU' ? null : el('span', {}, 'Falta: ', el('b', {}, eur(p.por_faturar)))));
+    if (p.fase) card.append(el('div', { class: 'fase' }, 'Fase: ' + p.fase + ' ', p.fase_fonte ? el('small', {}, '(' + p.fase_fonte + ')') : null));
+    lista.append(card);
+  });
+}
+
+function preencherConsultores(r) {
+  const s = $('f-consultor'), atual = s.value;
+  s.replaceChildren(el('option', { value: '' }, 'Todos os consultores'));
+  r.ranking.map(x => x.nome).sort().forEach(n => s.append(el('option', { value: n }, nomeBonito(n))));
+  s.value = atual;
+}
+
+async function carregar() {
+  $('btn-actualizar').disabled = true;
+  try {
+    const res = await fetch(DADOS_URL + '?_=' + Date.now(), { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    let d = await res.json();
+    if (Array.isArray(d)) d = d[0];
+    if (d && d.alatus_pact_dados) d = d.alatus_pact_dados;
+    if (!d || !Array.isArray(d.processos)) throw new Error('resposta inesperada');
+    dados = d;
+    const r = calcular(d);
+    const fd = d.fonte_data ? d.fonte_data.split('-').reverse().join('/') : '—';
+    $('fonte').textContent = 'Dados do controlo de ' + fd;
+    $('estado-carga').hidden = true;
+    mostrarKpis(r); mostrarRanking(r); preencherConsultores(r);
+    $('blocos').hidden = false; $('bloco-processos').hidden = false;
+    mostrarGrafico(r); mostrarLista();
+  } catch (e) {
+    const s = $('estado-carga'); s.hidden = false; s.className = 'erro';
+    s.textContent = 'Não foi possível carregar os dados (' + e.message + '). Tenta de novo daqui a pouco.';
+  } finally { $('btn-actualizar').disabled = false; }
+}
+
+document.querySelectorAll('.chip').forEach(b => b.addEventListener('click', () => {
+  filtroEstado = b.dataset.estado;
+  document.querySelectorAll('.chip').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  mostrarLista();
+}));
+$('f-consultor').addEventListener('change', mostrarLista);
+$('f-texto').addEventListener('input', mostrarLista);
+$('btn-actualizar').addEventListener('click', carregar);
+carregar();
+</script>
+</body>
+</html>
