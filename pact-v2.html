@@ -54,6 +54,8 @@
   #bloco-actividade tr.total td:first-child { background: #f0f7f3; }
   .desliza { font-size: 11px; color: var(--suave); margin-top: 4px; }
   @media (min-width: 560px) { .desliza { display: none; } }
+  #bloco-caminho th:first-child, #bloco-caminho td:first-child { position: sticky; left: 0; z-index: 1; background: var(--papel); }
+  #bloco-caminho th:first-child { background: var(--verde); }
   #bloco-2025 th:first-child, #bloco-2025 td:first-child { position: sticky; left: 0; z-index: 1; background: var(--papel); }
   #bloco-2025 th:first-child { background: var(--verde); }
   #bloco-2025 tr.total td:first-child { background: #f0f7f3; }
@@ -135,6 +137,19 @@
   <section class="cartao" id="bloco-obj" hidden>
     <h2>Objectivo 2026 · produção <span id="obj-nota" class="nota-h2"></span></h2>
     <div id="obj-lista" class="obj-lista"></div>
+  </section>
+
+  <section class="cartao" id="bloco-caminho" hidden>
+    <h2>Caminho até aos 75.000 € <span id="cam-nota" class="nota-h2"></span></h2>
+    <div class="tabela-wrap">
+      <table class="cmp" id="tab-caminho">
+        <thead><tr><th>Consultor</th><th>Falta</th><th title="Transações necessárias">Transações</th><th>Angariações</th>
+          <th>Visitas</th><th>Ofertas</th><th title="Contactos com clientes compradores">Contactos</th></tr></thead>
+        <tbody id="caminho"></tbody>
+      </table>
+    </div>
+    <p class="desliza">Desliza a tabela para o lado para ver todas as colunas →</p>
+    <p class="nota-cmp" id="cam-pressupostos"></p>
   </section>
 
   <div class="duas" id="blocos" hidden>
@@ -384,6 +399,51 @@ function mostrarObjectivos(r) {
   $('bloco-obj').hidden = false;
 }
 
+function mostrarCaminho(r) {
+  const f = dados.funil_2025, objs = dados.objectivos || [];
+  if (!f || !objs.length || !f.valor_por_transacao) return;
+  const ate = Math.max(...dados.faturas.map(x => x.mes), ...dados.processos.map(x => x.mes));
+  const mesesFalta = 12 - ate, mesesAct = dados.actividade_ate_mes || ate;
+  const prod = {}; r.ranking.forEach(x => prod[x.nome] = x.prod);
+  const act = {};
+  (dados.actividade || []).forEach(x => {
+    const o = act[x.consultor] || (act[x.consultor] = { ang: 0, vis: 0, ofr: 0, cc: 0 });
+    o.ang += x.angariacoes; o.vis += x.visitas; o.ofr += x.ofertas; o.cc += x.cc_contactos;
+  });
+  const up = x => Math.ceil(x - 1e-9);
+  const cel = (total, agoraMes) => {
+    const porMes = mesesFalta ? total / mesesFalta : null;
+    const baixo = porMes != null && agoraMes != null && agoraMes < porMes;
+    return el('td', {}, el('span', { class: 'v26' }, String(up(total))),
+      porMes == null ? null : el('span', { class: 'v25' }, up(porMes) + '/mês · agora ',
+        el('b', { class: baixo ? 'abaixo' : 'acima' }, (Math.round(agoraMes * 10) / 10).toLocaleString('pt-PT'))));
+  };
+  const tb = $('caminho'); tb.replaceChildren();
+  objs.map(o => ({ n: o.consultor, falta: Math.max(Number(o.producao) - (prod[o.consultor] || 0), 0) }))
+    .sort((a, b) => b.falta - a.falta).forEach(({ n, falta }) => {
+      const a = act[n] || { ang: 0, vis: 0, ofr: 0, cc: 0 }, pm = k => a[k] / mesesAct;
+      if (falta <= 0) {
+        tb.append(el('tr', {}, el('td', {}, nomeBonito(n)), el('td', { colspan: '6' }, 'Objectivo atingido 🎉')));
+        return;
+      }
+      const t = falta / f.valor_por_transacao, tcv = t * f.peso_cv, tcc = t * (1 - f.peso_cv);
+      tb.append(el('tr', {}, el('td', {}, nomeBonito(n)),
+        el('td', {}, el('span', { class: 'v26' }, eur0(falta)), mesesFalta ? el('span', { class: 'v25' }, eur0(falta / mesesFalta) + '/mês') : null),
+        el('td', {}, el('span', { class: 'v26' }, String(up(t))), el('span', { class: 'v25' }, up(tcv) + ' vend. · ' + up(tcc) + ' comp.')),
+        cel(tcv / f.taxa_angariacao_venda, pm('ang')), cel(tcc / f.taxa_visita_venda, pm('vis')),
+        cel(tcc / f.taxa_oferta_venda, pm('ofr')), cel(tcc / f.taxa_contacto_venda, pm('cc'))));
+    });
+  const pct = x => (Math.round(x * 1000) / 10).toLocaleString('pt-PT') + '%';
+  $('cam-nota').textContent = mesesFalta ? '· ' + mesesFalta + ' meses até dezembro' : '';
+  $('cam-pressupostos').textContent =
+    'Conta feita com os números reais de 2025 da equipa (CRM + relatórios RD_2025): cada transação valeu em média ' +
+    eur0(f.valor_por_transacao) + '; ' + pct(f.peso_cv) + ' das transações foram do lado vendedor; ' +
+    pct(f.taxa_angariacao_venda) + ' das angariações deram venda; ' + pct(f.taxa_visita_venda) + ' das visitas, ' +
+    pct(f.taxa_oferta_venda) + ' das ofertas e ' + pct(f.taxa_contacto_venda) + ' dos contactos com compradores deram venda. ' +
+    '"Agora" = média mensal de 2026. É o ritmo necessário, não uma previsão: uma angariação feita hoje raramente vende até dezembro.';
+  $('bloco-caminho').hidden = false;
+}
+
 function mostrar2025(r) {
   const a25 = dados.ano_2025 || [];
   if (!a25.length) return;
@@ -443,7 +503,7 @@ async function carregar() {
     mostrarKpis(r); mostrarRanking(r); preencherConsultores(r);
     $('blocos').hidden = false; $('bloco-processos').hidden = false;
     mostrarGrafico(r); mostrarLista();
-    mostrarObjectivos(r); mostrar2025(r);
+    mostrarObjectivos(r); mostrarCaminho(r); mostrar2025(r);
     if ((d.actividade || []).length) {
       $('act-ate').textContent = '· CRM ERA, até ' + MESES[(d.actividade_ate_mes || 1) - 1].toLowerCase() + ' (sem a linha do director)';
       $('bloco-actividade').hidden = false; mostrarActividade();
