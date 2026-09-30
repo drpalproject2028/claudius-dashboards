@@ -62,6 +62,16 @@
   .cmp .v25 { font-size: 10px; color: var(--suave); display: block; }
   .cmp .acima { color: var(--verde-esc); } .cmp .abaixo { color: var(--vermelho); }
   .nota-cmp { font-size: 11px; color: var(--suave); margin-top: 6px; line-height: 1.4; }
+  .obj-lista { display: grid; gap: 10px; }
+  @media (min-width: 760px) { .obj-lista { grid-template-columns: 1fr 1fr; column-gap: 24px; } }
+  .obj-linha .obj-topo { display: flex; justify-content: space-between; font-size: 12px; gap: 8px; }
+  .obj-linha .obj-topo b { font-size: 13px; }
+  .obj-barra { position: relative; height: 12px; background: #ece8dc; border-radius: 6px; margin-top: 4px; overflow: visible; }
+  .obj-feito { height: 100%; border-radius: 6px; background: var(--verde); max-width: 100%; }
+  .obj-feito.atras { background: var(--ouro); }
+  .obj-ritmo { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--texto); opacity: .55; }
+  .obj-det { font-size: 11px; color: var(--suave); margin-top: 3px; }
+  .obj-linha.equipa { border-top: 1px solid var(--linha); padding-top: 8px; }
   .nota-h2 { text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--suave); }
 
   .filtros { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 10px; }
@@ -122,6 +132,11 @@
     <div class="kpi"><div class="rot">Caíram</div><div class="val" id="k-caiu"></div><div class="det" id="k-caiu-d"></div></div>
   </section>
 
+  <section class="cartao" id="bloco-obj" hidden>
+    <h2>Objectivo 2026 · produção <span id="obj-nota" class="nota-h2"></span></h2>
+    <div id="obj-lista" class="obj-lista"></div>
+  </section>
+
   <div class="duas" id="blocos" hidden>
     <section class="cartao">
       <h2>Ranking 2026 por consultor</h2>
@@ -151,7 +166,7 @@
       <table>
         <thead><tr><th>Consultor</th><th title="Contactos com clientes vendedores">Cont. vend.</th><th title="Apresentações de serviço">Apres.</th>
           <th title="Angariações (em exclusivo)">Angar. (excl.)</th><th title="Visitas com clientes compradores">Visitas</th>
-          <th title="Ofertas">Ofertas</th><th title="Transações (CV + CC)">Transações</th><th title="Produzido no período (parte da equipa, sem caídos)">Produzido</th></tr></thead>
+          <th title="Ofertas">Ofertas</th><th title="Transações (CV + CC)">Transações</th><th title="Produzido no período (parte da equipa)">Produzido</th></tr></thead>
         <tbody id="actividade"></tbody>
       </table>
     </div>
@@ -249,7 +264,7 @@ function calcular(d) {
 }
 
 function mostrarKpis(r) {
-  $('k-prod').textContent = eurCurto(r.prod); $('k-prod-d').textContent = r.nVivos + ' processos (sem os que caíram)';
+  $('k-prod').textContent = eurCurto(r.prod); $('k-prod-d').textContent = r.nVivos + ' processos';
   $('k-fat').textContent = eurCurto(r.fat); $('k-fat-d').textContent = r.nFat + ' faturas com parte da equipa';
   $('k-por').textContent = eurCurto(r.por); $('k-por-d').textContent = r.nPor + ' processos';
   $('k-caiu').textContent = eurCurto(r.caido); $('k-caiu-d').textContent = r.nCaidos + ' processos com valor na produção';
@@ -276,7 +291,7 @@ function mostrarGrafico(r) {
   grafico = new Chart($('grafico-mes'), {
     type: 'bar',
     data: { labels, datasets: [
-      { label: 'Produzido (sem caídos)', data: r.prodMes.slice(0, ult + 1), backgroundColor: '#2d7a5a', borderRadius: 3 },
+      { label: 'Produzido', data: r.prodMes.slice(0, ult + 1), backgroundColor: '#2d7a5a', borderRadius: 3 },
       { label: 'Faturado', data: r.fatMes.slice(0, ult + 1), backgroundColor: '#2a5a8f', borderRadius: 3 } ] },
     options: { responsive: true, maintainAspectRatio: false,
       plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 } },
@@ -339,6 +354,36 @@ function mostrarActividade() {
     el('td', {}, String(t.tr)), el('td', {}, eur0(t.prod))));
 }
 
+function mostrarObjectivos(r) {
+  const objs = dados.objectivos || [];
+  if (!objs.length) return;
+  const ate = Math.max(...dados.faturas.map(f => f.mes), ...dados.processos.map(p => p.mes));
+  const ritmo = ate / 12, mesesFalta = 12 - ate;
+  const prod = {}; r.ranking.forEach(x => prod[x.nome] = x.prod);
+  const lista = $('obj-lista'); lista.replaceChildren();
+  const linha = (nome, feito, obj, equipa) => {
+    const pct = obj ? feito / obj : 0, falta = Math.max(obj - feito, 0);
+    const atras = pct < ritmo;
+    const barra = el('div', { class: 'obj-barra' },
+      el('div', { class: 'obj-feito' + (atras ? ' atras' : ''), style: 'width:' + Math.min(100, pct * 100).toFixed(1) + '%' }),
+      el('div', { class: 'obj-ritmo', style: 'left:' + (ritmo * 100).toFixed(1) + '%', title: 'Onde devia estar em ' + MESES[ate - 1] }));
+    const det = falta <= 0 ? 'Objectivo atingido 🎉' :
+      'Faltam ' + eur0(falta) + (mesesFalta ? ' · ' + eur0(falta / mesesFalta) + '/mês até dezembro' : '');
+    return el('div', { class: 'obj-linha' + (equipa ? ' equipa' : '') },
+      el('div', { class: 'obj-topo' }, el('b', {}, nome), el('span', {}, eur0(feito) + ' de ' + eur0(obj) + ' · ', el('b', {}, Math.round(pct * 100) + '%'))),
+      barra, el('div', { class: 'obj-det' }, det));
+  };
+  let tf = 0, to = 0;
+  objs.slice().sort((a, b) => (prod[b.consultor] || 0) - (prod[a.consultor] || 0)).forEach(o => {
+    const f = prod[o.consultor] || 0; tf += f; to += Number(o.producao);
+    lista.append(linha(nomeBonito(o.consultor), f, Number(o.producao)));
+  });
+  lista.append(linha('Equipa', tf, to, true));
+  $('obj-nota').textContent = '· 75.000 € por consultor · a marca na barra é onde devia estar em ' +
+    MESES[ate - 1].toLowerCase() + ' (' + Math.round(ritmo * 100) + '%)';
+  $('bloco-obj').hidden = false;
+}
+
 function mostrar2025(r) {
   const a25 = dados.ano_2025 || [];
   if (!a25.length) return;
@@ -398,7 +443,7 @@ async function carregar() {
     mostrarKpis(r); mostrarRanking(r); preencherConsultores(r);
     $('blocos').hidden = false; $('bloco-processos').hidden = false;
     mostrarGrafico(r); mostrarLista();
-    mostrar2025(r);
+    mostrarObjectivos(r); mostrar2025(r);
     if ((d.actividade || []).length) {
       $('act-ate').textContent = '· CRM ERA, até ' + MESES[(d.actividade_ate_mes || 1) - 1].toLowerCase() + ' (sem a linha do director)';
       $('bloco-actividade').hidden = false; mostrarActividade();
