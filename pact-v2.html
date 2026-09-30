@@ -135,7 +135,12 @@
   </section>
 
   <section class="cartao" id="bloco-obj" hidden>
-    <h2>Objectivo 2026 · produção <span id="obj-nota" class="nota-h2"></span></h2>
+    <h2>Objectivos 2026 <span id="obj-nota" class="nota-h2"></span></h2>
+    <div class="filtros" role="group" aria-label="Objectivo">
+      <button class="chip chip-obj" type="button" data-obj="producao" aria-pressed="true">Produção</button>
+      <button class="chip chip-obj" type="button" data-obj="angariacoes" aria-pressed="false">Angariações</button>
+      <button class="chip chip-obj" type="button" data-obj="ang_exclusivos" aria-pressed="false">Exclusivos</button>
+    </div>
     <div id="obj-lista" class="obj-lista"></div>
   </section>
 
@@ -369,33 +374,44 @@ function mostrarActividade() {
     el('td', {}, String(t.tr)), el('td', {}, eur0(t.prod))));
 }
 
+let objMetrica = 'producao', ultimoR = null;
 function mostrarObjectivos(r) {
-  const objs = dados.objectivos || [];
+  ultimoR = r = r || ultimoR;
+  const objs = (dados.objectivos || []).filter(o => o[objMetrica] != null);
   if (!objs.length) return;
-  const ate = Math.max(...dados.faturas.map(f => f.mes), ...dados.processos.map(p => p.mes));
+  const euro = objMetrica === 'producao';
+  // produção: meses com dados de produção/faturação; angariações: meses com actividade do CRM registada
+  const ate = euro ? Math.max(...dados.faturas.map(f => f.mes), ...dados.processos.map(p => p.mes))
+                   : (dados.actividade_ate_mes || 0);
+  if (!ate) return;
   const ritmo = ate / 12, mesesFalta = 12 - ate;
-  const prod = {}; r.ranking.forEach(x => prod[x.nome] = x.prod);
+  const feito = {};
+  if (euro) r.ranking.forEach(x => feito[x.nome] = x.prod);
+  else (dados.actividade || []).forEach(a => feito[a.consultor] = (feito[a.consultor] || 0) +
+         (objMetrica === 'angariacoes' ? a.angariacoes : a.ang_exclusivos));
+  const fmt = euro ? eur0 : (x => String(Math.round(x * 10) / 10).replace('.', ','));
   const lista = $('obj-lista'); lista.replaceChildren();
-  const linha = (nome, feito, obj, equipa) => {
-    const pct = obj ? feito / obj : 0, falta = Math.max(obj - feito, 0);
-    const atras = pct < ritmo;
+  const linha = (nome, f, obj, equipa) => {
+    const pct = obj ? f / obj : 0, falta = Math.max(obj - f, 0);
     const barra = el('div', { class: 'obj-barra' },
-      el('div', { class: 'obj-feito' + (atras ? ' atras' : ''), style: 'width:' + Math.min(100, pct * 100).toFixed(1) + '%' }),
+      el('div', { class: 'obj-feito' + (pct < ritmo ? ' atras' : ''), style: 'width:' + Math.min(100, pct * 100).toFixed(1) + '%' }),
       el('div', { class: 'obj-ritmo', style: 'left:' + (ritmo * 100).toFixed(1) + '%', title: 'Onde devia estar em ' + MESES[ate - 1] }));
     const det = falta <= 0 ? 'Objectivo atingido 🎉' :
-      'Faltam ' + eur0(falta) + (mesesFalta ? ' · ' + eur0(falta / mesesFalta) + '/mês até dezembro' : '');
+      'Faltam ' + fmt(falta) + (mesesFalta ? ' · ' + fmt(euro ? falta / mesesFalta : Math.ceil(falta / mesesFalta * 10) / 10) + '/mês até dezembro' : '');
     return el('div', { class: 'obj-linha' + (equipa ? ' equipa' : '') },
-      el('div', { class: 'obj-topo' }, el('b', {}, nome), el('span', {}, eur0(feito) + ' de ' + eur0(obj) + ' · ', el('b', {}, Math.round(pct * 100) + '%'))),
+      el('div', { class: 'obj-topo' }, el('b', {}, nome), el('span', {}, fmt(f) + ' de ' + fmt(obj) + ' · ', el('b', {}, Math.round(pct * 100) + '%'))),
       barra, el('div', { class: 'obj-det' }, det));
   };
   let tf = 0, to = 0;
-  objs.slice().sort((a, b) => (prod[b.consultor] || 0) - (prod[a.consultor] || 0)).forEach(o => {
-    const f = prod[o.consultor] || 0; tf += f; to += Number(o.producao);
-    lista.append(linha(nomeBonito(o.consultor), f, Number(o.producao)));
+  objs.slice().sort((a, b) => (feito[b.consultor] || 0) - (feito[a.consultor] || 0)).forEach(o => {
+    const f = feito[o.consultor] || 0; tf += f; to += Number(o[objMetrica]);
+    lista.append(linha(nomeBonito(o.consultor), f, Number(o[objMetrica])));
   });
   lista.append(linha('Equipa', tf, to, true));
-  $('obj-nota').textContent = '· 75.000 € por consultor · a marca na barra é onde devia estar em ' +
-    MESES[ate - 1].toLowerCase() + ' (' + Math.round(ritmo * 100) + '%)';
+  const desc = { producao: '75.000 € de produção por consultor', angariacoes: '36 angariações por consultor (3/mês)',
+                 ang_exclusivos: '12 angariações em exclusivo por consultor (1/mês)' }[objMetrica];
+  $('obj-nota').textContent = '· ' + desc + ' · a marca na barra é onde devia estar em ' +
+    MESES[ate - 1].toLowerCase() + ' (' + Math.round(ritmo * 100) + '%)' + (euro ? '' : ' · fonte: CRM ERA');
   $('bloco-obj').hidden = false;
 }
 
@@ -518,6 +534,11 @@ document.querySelectorAll('.chip[data-estado]').forEach(b => b.addEventListener(
   filtroEstado = b.dataset.estado;
   document.querySelectorAll('.chip[data-estado]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
   mostrarLista();
+}));
+document.querySelectorAll('.chip-obj').forEach(b => b.addEventListener('click', () => {
+  objMetrica = b.dataset.obj;
+  document.querySelectorAll('.chip-obj').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  mostrarObjectivos();
 }));
 document.querySelectorAll('.chip-act').forEach(b => b.addEventListener('click', () => {
   periodoAct = b.dataset.periodo;
